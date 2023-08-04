@@ -13,8 +13,8 @@ int TX_PIN = 1;
 SoftwareSerial gpsSerial(RX_PIN, TX_PIN);
 
 struct LocationData {
-  double currentLatitude;
-  double currentLongitude;
+  double latitude;
+  double Longitude;
   double bearing;
   double distance;
 };
@@ -26,21 +26,27 @@ void sd_setup(){
   }
 }
 
-void sd_GPSwrite(double longitude, double latitude){
+void sd_GPSwrite(double latitude, double longitude, double bearing, double distance){
   myFile = SD.open("log.txt", FILE_WRITE);
   if (myFile){
     myFile.print("time: ");
-    time = millis();
-    myFile.print(String(time/1000));
-    myFile.print(" longitude: ");
-    myFile.print(String(longitude,9));
-    myFile.print(" longitude: ");
-    myFile.println(String(latitude,9));
+    unsigned long time = millis();
+    myFile.println(String(time/1000));
+    if(data.Latitude != 0.0){
+      myFile.print(" Latitude: ");
+      myFile.print(String(latitude,9));
+      myFile.print(" longitude: ");
+      myFile.print(String(longitude,9));
+      myFile.print(" bearing: ");
+      myFile.print(String(bearing,9));
+      myFile.print(" distance: ");
+      myFile.println(String(distance,9));
+    }
   }
   myFile.close();
 }
 
-LocationData getGPSData() {
+void getGPSData() {
   static LocationData data = {0.0, 0.0, 0.0, 0.0}; 
 
   while (gpsSerial.available() > 0) {
@@ -48,22 +54,22 @@ LocationData getGPSData() {
     char c = gpsSerial.read();
     gps.encode(c);
     
-    if(!gps.location.isUpdated()) continue;
-    
-    data.currentLatitude = gps.location.lat();
-    data.currentLongitude = gps.location.lng();
+    if (gps.location.isUpdated()) {
+
+    data.latitude = gps.location.lat();
+    data.Longitude = gps.location.lng();
 
     data.bearing = TinyGPSPlus::courseTo(
-        data.currentLatitude, data.currentLongitude,
+        data.latitude, data.Longitude,
         destLatitude, destLongitude
     );
 
     data.distance = TinyGPSPlus::distanceBetween(
-        data.currentLatitude, data.currentLongitude,
+        data.latitude, data.Longitude,
         destLatitude, destLongitude
     );
 
-    return data; // GPSデータが更新されたら値を返す
+    sd_GPSwrite(data.longitude, data.latitude, data.bearing, data.distance)
   }
 }
 
@@ -73,37 +79,11 @@ void setup() {
   pinMode(RX_PIN, INPUT);
   pinMode(TX_PIN, OUTPUT);
   sd_setup();
-  Serial.println("【start】");
 }
 
 void loop() {
-  unsigned long startTime = millis();
-  LocationData result = getGPSData();
-  Serial.print(String(startTime / 1000)+"秒　");
 
 
-  //if(result.currentLatitude == 0.0){  
-    //Serial.println("Please wait for a moment");
-    //delay(1000);
-  //}
-
-  //else{
-
-  Serial.print("現在地（");
-  Serial.print(result.currentLatitude,2);
-  Serial.print(",");
-  Serial.print(result.currentLongitude,2);
-  Serial.print(") ");
-  
-  Serial.print("方位: ");
-  Serial.print(result.bearing, 2);
-  Serial.print("°  ");
-  Serial.print("距離: ");
-  Serial.print(result.distance, 2);
-  Serial.println("m");
-
-  sd_GPSwrite( result.longitude, result.latitude);
-  
-  delay(1000); // Check GPS data every 1 second
+  //delay(1000); // Check GPS data every 1 second
   //}
 }
