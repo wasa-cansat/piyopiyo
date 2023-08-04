@@ -1,6 +1,3 @@
-#ifndef _MYFILE_H_
-#define _MYFILE_H_
-
 #include <SD.h>
 
 File myFile;
@@ -35,5 +32,3 @@ void loop() {
   sd_write();
   delay(1000);
 }
-
-#endif
