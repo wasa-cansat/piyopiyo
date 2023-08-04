@@ -7,3 +7,5 @@
 まず、READMEを読むこと
 ・注意点はここに追加
 ・動作確認のプログラムには"_check"の名前を入れる
+・Latest editionとsampleの2種類
+・
