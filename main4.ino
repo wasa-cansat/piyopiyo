@@ -1,45 +1,42 @@
+//前回実験の際に使用していたコード
+
 #ifndef MAIN_H
 #define MAIN_H
 //重複定義の回避
-
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 #include "HUSKYLENS.h"
 #include "motor.h"
+//#include <Arduino_LSM9DS1.h>
 #include <SD.h>
-
 File myFile;
 Motor motor;
 HUSKYLENS huskylens;
 TinyGPSPlus gps;
 SoftwareSerial gpsSerial(0, 1);  // RX_PIN, TX_PIN
-
 double destLatitude = 35.9064485;    // 目的地の緯度
 double destLongitude = 139.6238548;   // 目的地の経度
-
 struct LocationData {
-  double Latitude;
-  double Longitude;
+  double currentLatitude;
+  double currentLongitude;
   double bearing;
   double distance;
 };
-
 LocationData previousData;    // 前のデータを保持する変数
 LocationData nowData;       // 現在のデータを保持する変数
-
 float previousTheta;
 float nowTheta;
 float adjustedTheta;
 bool firstTime = true; // 初回のみ
-unsigned long time;  // 時間を記録
-
+unsigned long time;  // for sdcard
+//落下検出　坂
 void sd_setup();
 void sd_GPSwrite(double longitude, double latitude);
 void sd_ROTATEwrite(float rotate);
 LocationData getGPSData();
+// void calibrate();//地磁気のためのキャリブレーション
 void moveTowardsDestination();
 void findObject();
-
 void setup() {
   Serial.begin(115200);
   gpsSerial.begin(9600);
@@ -48,7 +45,6 @@ void setup() {
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
   Wire.begin();
-
 //  while (!huskylens.begin(Wire))
 //  {
 //        Serial.println(F("Begin failed!"));
@@ -56,12 +52,10 @@ void setup() {
 //        Serial.println(F("2.Please recheck the connection."));
 //        delay(100);
 //  }
-
 }
-
 void loop() {
-  Serial.println("GPS");
-
+        Serial.println("GPS");
+  //落下検知
   if(firstTime){
     motor.forward(3000); //3秒間前進 とりあえず動いてみる
     motor.freeze(100);
@@ -78,7 +72,7 @@ void loop() {
     do{
                 Serial.println("now in gps");
      nowData = getGPSData();
-    }while(nowData.Latitude == 0.0);
+    }while(nowData.currentLatitude == 0.0);
           moveTowardsDestination();
 }
 //落下検出　坂
@@ -118,14 +112,14 @@ LocationData getGPSData() {
     char c = gpsSerial.read();
     gps.encode(c);
     if(!gps.location.isUpdated()) continue;
-    data.Latitude = gps.location.lat();
-    data.Longitude = gps.location.lng();
+    data.currentLatitude = gps.location.lat();
+    data.currentLongitude = gps.location.lng();
     data.bearing = TinyGPSPlus::courseTo(                //from current to dest (North=0, West=270)
-        data.Latitude, data.Longitude,
+        data.currentLatitude, data.currentLongitude,
         destLatitude, destLongitude
     );
     data.distance = TinyGPSPlus::distanceBetween(
-        data.Latitude, data.Longitude,
+        data.currentLatitude, data.currentLongitude,
         destLatitude, destLongitude
     );
     return data;
@@ -137,18 +131,18 @@ void moveTowardsDestination() {
   Serial.println("go straight");
   motor.freeze(100);
   nowData = getGPSData();
-  double rot = atan((nowData.Longitude - previousData.Longitude)/(nowData.Latitude - previousData.Latitude))*180/PI;
-  double destrot = atan((destLongitude - previousData.Longitude)/(destLatitude - previousData.Latitude))*180/PI;
+  double rot = atan((nowData.currentLongitude - previousData.currentLongitude)/(nowData.currentLatitude - previousData.currentLatitude))*180/PI;
+  double destrot = atan((destLongitude - previousData.currentLongitude)/(destLatitude - previousData.currentLatitude))*180/PI;
   if (destrot>rot){
 //    motor.go_left((int)(destrot-rot)*10);
     motor.go_left(1000);
     Serial.println("go left");
     Serial.println(rot);
     Serial.println(destrot);
-    Serial.println(nowData.Longitude,15);
-    Serial.println(nowData.Latitude, 15);
-    Serial.println(previousData.Longitude, 15);
-    Serial.println(previousData.Latitude, 15);
+    Serial.println(nowData.currentLongitude,15);
+    Serial.println(nowData.currentLatitude, 15);
+    Serial.println(previousData.currentLongitude, 15);
+    Serial.println(nowData.currentLatitude, 15);
   }
   else{
 //    motor.go_right((int)(rot-destrot)*10);
@@ -156,10 +150,10 @@ void moveTowardsDestination() {
     Serial.println("go right");
         Serial.println(rot);
     Serial.println(destrot);
-    Serial.println(nowData.Longitude, 15);
-    Serial.println(nowData.Latitude, 15);
-    Serial.println(previousData.Longitude, 15);
-    Serial.println(previousData.Latitude, 15);
+    Serial.println(nowData.currentLongitude, 15);
+    Serial.println(nowData.currentLatitude, 15);
+    Serial.println(previousData.currentLongitude, 15);
+    Serial.println(nowData.currentLatitude, 15);
   }
 }
 void findObject(){
