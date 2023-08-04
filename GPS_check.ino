@@ -11,8 +11,8 @@ int TX_PIN = 1;
 SoftwareSerial gpsSerial(RX_PIN, TX_PIN);
 
 struct LocationData {
-  double Latitude;
-  double Longitude;
+  double latitude;
+  double longitude;
   double bearing;
   double distance;
 };
@@ -31,30 +31,33 @@ void getGPSData() {
     gps.encode(c);
 
     if (gps.location.isUpdated()) {
-      startTime();
-      data.Latitude = gps.location.lat();
-      data.Longitude = gps.location.lng();
+      
+      data.latitude = gps.location.lat();
+      data.longitude = gps.location.lng();
 
       data.bearing = TinyGPSPlus::courseTo(
-        data.Latitude, data.Longitude,
+        data.latitude, data.longitude,
         destLatitude, destLongitude);
       data.distance = TinyGPSPlus::distanceBetween(
-        data.Latitude, data.Longitude,
+        data.latitude, data.longitude,
         destLatitude, destLongitude);
       
-      Serial.print("現在地（");
-      Serial.print(data.Latitude, 6);
-      Serial.print(",");
-      Serial.print(data.Longitude, 6);
-      Serial.print(") ");
-
-      Serial.print("方位: ");
-      Serial.print(data.bearing, 6);
-      Serial.print("°  ");
-      Serial.print("距離: ");
-      Serial.print(data.distance, 6);
-      Serial.println("m");
-
+      unsigned long startTime = millis();
+      Serial.println(String(startTime / 1000) + "秒　　　");
+      if(data.Latitude != 0.0){
+        Serial.print("現在地（");
+        Serial.print(data.latitude, 6);
+        Serial.print(",");
+        Serial.print(data.longitude, 6);
+        Serial.print(") ");
+    
+        Serial.print("方位: ");
+        Serial.print(data.bearing, 6);
+        Serial.print("°  ");
+        Serial.print("距離: ");
+        Serial.print(data.distance, 6);
+        Serial.println("m");
+      }
     }
   }
 }
