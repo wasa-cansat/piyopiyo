@@ -11,13 +11,16 @@ int TX_PIN = 1;
 SoftwareSerial gpsSerial(RX_PIN, TX_PIN);
 
 struct LocationData {
-  double currentLatitude;
-  double currentLongitude;
+  double Latitude;
+  double Longitude;
   double bearing;
   double distance;
-  bool isUpdate;
 };
 
+void startTime() {
+  unsigned long startTime = millis();
+  Serial.print(String(startTime / 1000) + "秒　　　");
+}
 
 void getGPSData() {
   static LocationData data = { 0.0, 0.0, 0.0, 0.0 };
@@ -28,20 +31,21 @@ void getGPSData() {
     gps.encode(c);
 
     if (gps.location.isUpdated()) {
-      data.currentLatitude = gps.location.lat();
-      data.currentLongitude = gps.location.lng();
+      startTime();
+      data.Latitude = gps.location.lat();
+      data.Longitude = gps.location.lng();
 
       data.bearing = TinyGPSPlus::courseTo(
-        data.currentLatitude, data.currentLongitude,
+        data.Latitude, data.Longitude,
         destLatitude, destLongitude);
       data.distance = TinyGPSPlus::distanceBetween(
-        data.currentLatitude, data.currentLongitude,
+        data.Latitude, data.Longitude,
         destLatitude, destLongitude);
       
       Serial.print("現在地（");
-      Serial.print(data.currentLatitude, 6);
+      Serial.print(data.Latitude, 6);
       Serial.print(",");
-      Serial.print(data.currentLongitude, 6);
+      Serial.print(data.Longitude, 6);
       Serial.print(") ");
 
       Serial.print("方位: ");
@@ -64,10 +68,9 @@ void setup() {
 }
 
 void loop() {
-  unsigned long startTime = millis();
-  Serial.println(String(startTime / 1000) + "秒　");
+
   getGPSData();
 
-  delay(1000);  // Check GPS data every 1 second
+  //delay(1000);  // Check GPS data every 1 second
   //}
 }
