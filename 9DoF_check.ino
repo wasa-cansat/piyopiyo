@@ -1,5 +1,62 @@
-//参考
-//https://github.com/adafruit/Adafruit_BNO055
-//http://shinshu-makers.net/shinshu_makers/2023/01/21/%E3%80%90sta22%E3%80%91%E5%A7%BF%E5%8B%A2%E3%82%BB%E3%83%B3%E3%82%B5%E3%81%AB%E7%A7%8B%E6%9C%88%E3%81%AEbno055%E3%82%92%E8%A9%A6%E3%81%99%EF%BC%9Cyaw%E8%A7%92%E7%B2%BE%E5%BA%A6%EF%BC%91%EF%BD%9E/
-//https://gist.github.com/dj1711572002/a95b6944ce5ccb60faecd0a3edfcf9df
-//https://gist.github.com/dj1711572002/82216217b96c8abc2d62b5c6d122bf87
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
+
+#define BNO055_SAMPLERATE_DELAY_MS (100)
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
+
+void displaySensorDetails(void)
+{
+  sensor_t sensor;
+  bno.getSensor(&sensor);
+  Serial.println("------------------------------------");
+  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" xxx");
+  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" xxx");
+  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" xxx");
+  Serial.println("------------------------------------");
+  Serial.println("");
+  delay(500);
+}
+
+void setup(void)
+{
+  Serial.begin(9600);
+  Serial2.begin(115200);
+  if (!bno.begin())
+  {
+    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    while (1);
+  }
+
+  delay(1000);
+  bno.setExtCrystalUse(true);
+  displaySensorDetails();
+}
+
+void loop(void)
+{
+  sensors_event_t event;
+  bno.getEvent(&event);
+  float ox = 360 - (float)event.orientation.x;
+  float oy = (float)event.orientation.y;
+  float oz = (float)event.orientation.z;
+  Serial.printf("%4.3f,%4.3f,%4.3f,", ox, oy, oz);
+
+  imu::Quaternion quat = bno.getQuat();
+  uint8_t sys, gyro, accel, mag = 0;
+  bno.getCalibration(&sys, &gyro, &accel, &mag);
+  Serial.print(sys, DEC);
+  Serial.print(F(", "));
+  Serial.print(gyro, DEC);
+  Serial.print(F(", "));
+  Serial.print(accel, DEC);
+  Serial.print(F(", "));
+  Serial.print(mag, DEC);
+  Serial.println(F(""));
+
+  delay(BNO055_SAMPLERATE_DELAY_MS);
+}
