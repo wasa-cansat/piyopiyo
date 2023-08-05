@@ -28,7 +28,7 @@ void setup(void)
   Serial2.begin(115200);
   if (!bno.begin())
   {
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    Serial.print("no conection");
     while (1);
   }
 
