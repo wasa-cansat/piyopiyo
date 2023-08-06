@@ -38,6 +38,8 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
 void setup(void)
 {
+
+  
   Serial.begin(115200);
 
   while (!Serial) delay(10);  // wait for serial port to open!
@@ -87,9 +89,11 @@ void loop(void)
         Serial.print("error: ");
         Serial.println(error);
     }
+    double cal_x = (x + error)<360 ? x + error: x + error - 360.0;
     Serial.print("x = ");
-    Serial.println((x + error)<360 ? x + error: x + error - 360.0);
-    delay(100);
+    Serial.println(cal_x);
+
+    delay(10);
   }
 
 //  printEvent(&magnetometerData);

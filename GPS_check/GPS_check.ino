@@ -1,9 +1,11 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 
+
+
 TinyGPSPlus gps;
-double destLatitude = 35.9064485;    // 目的地の緯度
-double destLongitude = 139.6238548;  // 目的地の経度
+double destLatitude = 35.722309;    // 目的地の緯度
+double destLongitude = 139.686798;  // 目的地の経度
 
 int RX_PIN = 1;
 int TX_PIN = 0;
@@ -25,7 +27,7 @@ void startTime() {
 void getGPSData() {
   static LocationData data = { 0.0, 0.0, 0.0, 0.0 };
 
-  while (gpsSerial.available() > 0) {
+  if (gpsSerial.available() > 0) {
 
     char c = gpsSerial.read();
     gps.encode(c);
@@ -71,9 +73,8 @@ void setup() {
 }
 
 void loop() {
-
+  static LocationData data = {0.0, 0.0, 0.0, 0.0};
   getGPSData();
-
   //delay(1000);  // Check GPS data every 1 second
   //}
 }
