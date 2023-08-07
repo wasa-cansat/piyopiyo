@@ -19,7 +19,6 @@ struct GPSData {
   double distance;
 };
 
-
 //変更可
 double destLatitude = 35.9064485;    // 目的地の緯度
 double destLongitude = 139.6238548;   // 目的地の経度
@@ -28,21 +27,18 @@ double destLongitude = 139.6238548;   // 目的地の経度
 SoftwareSerial gpsSerial(0, 1);  // RX_PIN, TX_PIN
 unsigned long time;
 bool firstTime = true;
-//GPSData previousData;
-//GPSData nowData;
-//float previousTheta;
-//float nowTheta;
-//float adjustedTheta;
 
 void sd_setup();
 void sd_write();
-void getGPSData();
+void sd
+GPSData getGPSData();
 void moveTowardsDestination();
 void findObject();
 
 void setup() {
   Serial.begin(115200);
   gpsSerial.begin(9600);
+  sd_setup();
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
@@ -73,12 +69,7 @@ void loop() {
           }
       }
   }
-  
-    do{
-                Serial.println("now in gps");
-     nowData = getGPSData();
-    }while(nowData.Latitude == 0.0);
-          moveTowardsDestination();
+  moveTowardsDestination();
 }
 
 
@@ -89,7 +80,7 @@ void sd_setup(){
   }
 }
 
-void sd_GPSwrite(double longitude, double latitude){
+void sd_write(){
   myFile = SD.open("log.txt", FILE_WRITE);
   if (myFile){
     myFile.print("time: ");
@@ -103,35 +94,25 @@ void sd_GPSwrite(double longitude, double latitude){
   myFile.close();
 }
 
-void sd_ROTATEwrite(float rotate){
-  myFile = SD.open("log.txt", FILE_WRITE);
-  if (myFile){
-    myFile.print("time: ");
-    time = millis();
-    myFile.print(String(time/1000));
-    myFile.print(" azimuth: ");
-    myFile.println(String(rotate));
-  }
-  myFile.close();
-}
 
-void getGPSData() {
-  static GPSData data = {0.0, 0.0, 0.0, 0.0};
+GPSData getGPSData() {
+  static LocationData data = { 0.0, 0.0, 0.0, 0.0 };
   while (gpsSerial.available() > 0) {
     char c = gpsSerial.read();
     gps.encode(c);
-    if(!gps.location.isUpdated()) continue;
-    data.Latitude = gps.location.lat();
-    data.Longitude = gps.location.lng();
-    data.bearing = TinyGPSPlus::courseTo(                //from  to dest (North=0, West=270)
-        data.Latitude, data.Longitude,
-        destLatitude, destLongitude
-    );
-    data.distance = TinyGPSPlus::distanceBetween(
-        data.Latitude, data.Longitude,
-        destLatitude, destLongitude
-    );
-    return data;
+    if (gps.location.isUpdated()) {
+      data.latitude = gps.location.lat();
+      data.longitude = gps.location.lng();
+      data.bearing = TinyGPSPlus::courseTo(
+        data.latitude, data.longitude,
+        destLatitude, destLongitude);
+      data.distance = TinyGPSPlus::distanceBetween(
+        data.latitude, data.longitude,
+        destLatitude, destLongitude);
+      if(data.latitude != 0.0){
+        return data;
+      }
+    }
   }
 }
 
@@ -158,7 +139,7 @@ void moveTowardsDestination() {
 //    motor.go_right((int)(rot-destrot)*10);
     motor.go_right(1000);
     Serial.println("go right");
-        Serial.println(rot);
+    Serial.println(rot);
     Serial.println(destrot);
     Serial.println(nowData.Longitude, 15);
     Serial.println(nowData.Latitude, 15);
