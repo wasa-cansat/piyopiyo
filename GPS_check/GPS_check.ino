@@ -7,8 +7,8 @@ TinyGPSPlus gps;
 double destLatitude = 35.722309;    // 目的地の緯度
 double destLongitude = 139.686798;  // 目的地の経度
 
-int RX_PIN = 1;
-int TX_PIN = 0;
+int RX_PIN = 0;
+int TX_PIN = 1;
 
 SoftwareSerial gpsSerial(RX_PIN, TX_PIN);
 

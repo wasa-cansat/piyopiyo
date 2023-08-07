@@ -1,3 +1,8 @@
+
+
+
+
+
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
@@ -6,16 +11,18 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 #include "motor.h"
+ 
+
 
 
 
 //GPS関連
 TinyGPSPlus gps;
-double destLatitude = 35.722309;    // 目的地の緯度
-double destLongitude = 139.686798;  // 目的地の経度
+double destLatitude = 35.704692;    // 目的地の緯度
+double destLongitude = 139.714675;  // 目的地の経度
 
-int RX_PIN = 1;
-int TX_PIN = 0;
+int RX_PIN = 0;
+int TX_PIN = 1;
 
 SoftwareSerial gpsSerial(RX_PIN, TX_PIN);
 
@@ -51,6 +58,10 @@ Motor motor;
 File myFile;
 void sd_setup();
 void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle);
+
+
+unsigned long time, previous_time;
+
 
 void setup(void)
 {
@@ -93,12 +104,15 @@ void loop(void)
   double cal_x = 0;
   double error = 0;
   LocationData now_data = {0.0, 0.0, 0.0, 0.0};
+
+  time = millis();
   
   while(1){
 
     now_data = getGPSData(cal_x);
     Serial.println(now_data.bearing);
-
+    previous_time = millis();
+    if(previous_time -time > 200){
     sensors_event_t orientationData, magnetometerData;
 
     bno.getEvent(&orientationData);
@@ -111,7 +125,7 @@ void loop(void)
     double mag_y = magnetometerData.magnetic.y;
     double mag_z = magnetometerData.magnetic.z;
     if(abs(mag_y + 0.06) < 0.0001 || abs(mag_y + 8.06) < 0.0001 || (mag_x + mag_y + mag_z) > 2000){
-//        Serial.println("not valid");
+        // Serial.println("not valid");
     }
     else{
           error = atan2(mag_y, mag_x)*180/PI + 180 - x;
@@ -121,8 +135,13 @@ void loop(void)
 //        Serial.println(error);
     } 
     cal_x = (x + error)<360 ? x + error: x + error - 360.0;
+    cal_x = (cal_x + 180) < 360? cal_x + 180: cal_x - 180;
+    cal_x = 360 - cal_x;
     Serial.print("x = ");
-    Serial.println(cal_x);
+    Serial.println(cal_x); 
+    time = millis();     
+    }
+
 
 //    Serial.println(data.bearing);
     if(abs(cal_x - now_data.bearing) < 10.0)
@@ -145,10 +164,10 @@ void loop(void)
 
 
 //GPS関連
-void startTime() {
-  unsigned long startTime = millis();
-  Serial.print(String(startTime / 1000) + "秒　　　");
-}
+// void startTime() {
+//   unsigned long startTime = millis();
+//   Serial.print(String(startTime / 1000) + "秒　　　");
+// }
 
 LocationData getGPSData(double angle) {
   static LocationData data = { 0.0, 0.0, 0.0, 0.0 };
