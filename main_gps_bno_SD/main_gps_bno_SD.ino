@@ -60,8 +60,10 @@ void setup(void)
 
 
   //モーター用
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
 
   //GPS
   Serial.begin(115200);
@@ -117,7 +119,7 @@ void loop(void)
 //        Serial.println(atan2(mag_y, mag_x)*180/PI + 180);
 //        Serial.print("error: ");
 //        Serial.println(error);
-    }
+    } 
     cal_x = (x + error)<360 ? x + error: x + error - 360.0;
     Serial.print("x = ");
     Serial.println(cal_x);
