@@ -19,17 +19,20 @@ struct GPSData {
   double distance;
 };
 
+
+//変更可
 double destLatitude = 35.9064485;    // 目的地の緯度
 double destLongitude = 139.6238548;   // 目的地の経度
 
+//変更不可
 SoftwareSerial gpsSerial(0, 1);  // RX_PIN, TX_PIN
-GPSData previousData;
-GPSData nowData;
-float previousTheta;
-float nowTheta;
-float adjustedTheta;
-bool firstTime = true;
 unsigned long time;
+bool firstTime = true;
+//GPSData previousData;
+//GPSData nowData;
+//float previousTheta;
+//float nowTheta;
+//float adjustedTheta;
 
 void sd_setup();
 void sd_write();
@@ -55,13 +58,13 @@ void setup() {
 }
 
 void loop() {
-        Serial.println("GPS");
-  //落下検知
+
   if(firstTime){
     motor.forward(3000); //3秒間前進 とりあえず動いてみる
     motor.freeze(100);
     firstTime = false;
   }
+  
   if (huskylens.request()) {
       if (huskylens.isLearned()) {
           if (huskylens.available()) {
@@ -70,19 +73,22 @@ void loop() {
           }
       }
   }
+  
     do{
                 Serial.println("now in gps");
      nowData = getGPSData();
     }while(nowData.Latitude == 0.0);
           moveTowardsDestination();
 }
-//落下検出　坂
+
+
 void sd_setup(){
   pinMode(10, OUTPUT);
   while(!SD.begin(10)){
     delay(1000);
   }
 }
+
 void sd_GPSwrite(double longitude, double latitude){
   myFile = SD.open("log.txt", FILE_WRITE);
   if (myFile){
@@ -96,6 +102,7 @@ void sd_GPSwrite(double longitude, double latitude){
   }
   myFile.close();
 }
+
 void sd_ROTATEwrite(float rotate){
   myFile = SD.open("log.txt", FILE_WRITE);
   if (myFile){
@@ -107,6 +114,7 @@ void sd_ROTATEwrite(float rotate){
   }
   myFile.close();
 }
+
 void getGPSData() {
   static GPSData data = {0.0, 0.0, 0.0, 0.0};
   while (gpsSerial.available() > 0) {
@@ -126,6 +134,7 @@ void getGPSData() {
     return data;
   }
 }
+
 void moveTowardsDestination() {
   previousData = getGPSData();
   motor.forward(20000);  //5秒間前進
