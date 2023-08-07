@@ -4,6 +4,10 @@
 #include <utility/imumaths.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
+#include <SD.h>
+#include "motor.h"
+
+
 
 //GPS関連
 TinyGPSPlus gps;
@@ -23,7 +27,7 @@ struct LocationData {
 };
 
 void startTime();
-LocationData getGPSData();
+LocationData getGPSData(double angle);
 
 
 
@@ -40,14 +44,20 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
 
 //モーター関連
-void right();
-void left();
-void motor_stop();
+Motor motor;
 
 
+//SD関連
+File myFile;
+void sd_setup();
+void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle);
 
 void setup(void)
 {
+
+  //SD用
+  void sd_setup();
+
 
   //モーター用
   pinMode(2, OUTPUT);
@@ -78,13 +88,13 @@ void setup(void)
 void loop(void)
 {
 
-
+  double cal_x = 0;
   double error = 0;
   LocationData now_data = {0.0, 0.0, 0.0, 0.0};
   
   while(1){
 
-    now_data = getGPSData();
+    now_data = getGPSData(cal_x);
     Serial.println(now_data.bearing);
 
     sensors_event_t orientationData, magnetometerData;
@@ -108,46 +118,29 @@ void loop(void)
 //        Serial.print("error: ");
 //        Serial.println(error);
     }
-    double cal_x = (x + error)<360 ? x + error: x + error - 360.0;
+    cal_x = (x + error)<360 ? x + error: x + error - 360.0;
     Serial.print("x = ");
     Serial.println(cal_x);
 
 //    Serial.println(data.bearing);
     if(abs(cal_x - now_data.bearing) < 10.0)
     {
-      motor_stop();
+      motor.forward(0);
       Serial.println("stop");
     }
     else if(((now_data.bearing - cal_x) > 0 ? now_data.bearing - cal_x: now_data.bearing + 360 - cal_x) < 180 )
     {
+      motor.go_right(0);
       Serial.println("right");
-      right();
     }
     else
     {
-      left();
+      motor.go_left(0);
       Serial.println("left");
     }
   }
 }
 
-void left()
-{
-  digitalWrite(2, HIGH);
-  digitalWrite(3, LOW);
-}
-
-void right()
-{
-  digitalWrite(2, LOW);
-  digitalWrite(3, HIGH);
-}
-
-void motor_stop()
-{
-  digitalWrite(2, HIGH);
-  digitalWrite(3, HIGH);
-}
 
 //GPS関連
 void startTime() {
@@ -155,7 +148,7 @@ void startTime() {
   Serial.print(String(startTime / 1000) + "秒　　　");
 }
 
-LocationData getGPSData() {
+LocationData getGPSData(double angle) {
   static LocationData data = { 0.0, 0.0, 0.0, 0.0 };
     Serial.println("in GPS");
 
@@ -191,8 +184,45 @@ LocationData getGPSData() {
         Serial.print("距離: ");
         Serial.print(data.distance, 6);
         Serial.println("m");
+        sd_GPSwrite(data.latitude, data.longitude, data.bearing, data.distance, angle);
         return data;
       }
     }
   }
+}
+
+//SD用
+
+void sd_setup(){
+  pinMode(10, OUTPUT);
+  while(!SD.begin(10)){
+    delay(1000);
+  }
+}
+
+void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle){
+  myFile = SD.open("log.txt", FILE_WRITE);
+  if (myFile){
+    myFile.print("time: ");
+    unsigned long time = millis();
+    myFile.println(String(time/1000));
+    if(latitude != 0.0){
+      myFile.print(" Latitude: ");
+      myFile.print(String(latitude,9));
+      Serial.println(latitude, 9);
+      myFile.print(" longitude: ");
+      myFile.print(String(longitude,9));
+      Serial.println(longitude, 9);
+      myFile.print(" bearing: ");
+      myFile.print(String(bearing,9));
+      Serial.println(bearing, 9);
+      myFile.print(" distance: ");
+      myFile.println(String(distance,9));
+      Serial.println(distance, 9);
+      myFile.print(" angle: ");
+      myFile.println(String(angle,9));
+      Serial.println(angle, 9);
+    }
+  }
+  myFile.close();
 }
