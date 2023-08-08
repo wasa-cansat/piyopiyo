@@ -11,6 +11,8 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 #include "motor.h"
+#include "HUSKYLENS.h"
+
  
 
 
@@ -60,6 +62,8 @@ void sd_setup();
 const int chipSelect = 10;
 void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle);
 
+//HUSKYLENS
+
 
 unsigned long time, previous_time;
 
@@ -95,6 +99,15 @@ void setup(void)
     /* There was a problem detecting the BNO055 ... check your connections */
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while (1);
+  }
+
+  //huskylens
+  while (!huskylens.begin(Wire))
+  {
+        Serial.println(F("Begin failed!"));
+        Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
+        Serial.println(F("2.Please recheck the connection."));
+        delay(100);
   }
 
 }
@@ -222,7 +235,7 @@ void sd_setup(){
 }
 
 void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle){
-  myFile = SD.open("log2.txt", FILE_WRITE);
+  myFile = SD.open("log.txt", FILE_WRITE);
   if (myFile){
     myFile.print("time: ");
     unsigned long time = millis();
@@ -244,9 +257,6 @@ void sd_GPSwrite(double latitude, double longitude, double bearing, double dista
       myFile.println(String(angle,9));
       Serial.println(angle, 9);
     }
-  }
-  else{
-    Serial.println("cannot open file");
   }
   myFile.close();
 }
