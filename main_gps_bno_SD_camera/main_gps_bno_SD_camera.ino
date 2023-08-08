@@ -1,8 +1,3 @@
-
-
-
-
-
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
@@ -13,9 +8,12 @@
 #include "motor.h"
 #include "HUSKYLENS.h"
 
- 
 
 
+//HUSKYLENS
+HUSKYLENS huskylens;
+void findObject();
+void findObjectSetup();
 
 
 //GPS関連
@@ -62,8 +60,6 @@ void sd_setup();
 const int chipSelect = 10;
 void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle);
 
-//HUSKYLENS
-
 
 unsigned long time, previous_time;
 
@@ -72,7 +68,7 @@ void setup(void)
 {
 
   //SD用
-  void sd_setup();
+  sd_setup();
 
 
   //モーター用
@@ -89,7 +85,10 @@ void setup(void)
 
   
   //bno055
-  while (!Serial) delay(10);  // wait for serial port to open!
+  while (!Serial) {
+    delay(10); 
+    Serial.println("no Serial");
+  } // wait for serial port to open!
 
   Serial.println("Orientation Sensor Test"); Serial.println("");
 
@@ -101,32 +100,43 @@ void setup(void)
     while (1);
   }
 
-  //huskylens
+  //camera
+  Wire.begin();
   while (!huskylens.begin(Wire))
-  {
-        Serial.println(F("Begin failed!"));
-        Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
-        Serial.println(F("2.Please recheck the connection."));
-        delay(100);
-  }
+ {
+       Serial.println(F("Begin failed!"));
+       Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
+       Serial.println(F("2.Please recheck the connection."));
+       delay(100);
+ }
 
 }
 
 void loop(void)
 {
 
+
+  Serial.println("now in loop");
   double cal_x = 0;
   double error = 0;
-  LocationData now_data = {0.0, 0.0, 0.0, 0.0};
+  LocationData now_data = {0.0, 0.0, 0.0, 20.0};
 
   time = millis();
   
   while(1){
 
+    if(now_data.distance < 10){
+      findObjectSetup();
+      continue;
+    }
+
     now_data = getGPSData(cal_x);
     Serial.println(now_data.bearing);
     previous_time = millis();
-    if(previous_time -time > 200){
+    if(previous_time -time > 20){
+
+
+
     sensors_event_t orientationData, magnetometerData;
 
     bno.getEvent(&orientationData);
@@ -150,7 +160,7 @@ void loop(void)
     } 
     cal_x = (x + error)<360 ? x + error: x + error - 360.0;
     cal_x = (cal_x + 180) < 360? cal_x + 180: cal_x - 180; //I2cテスト用にコメントアウト
-//    cal_x = 360 - ca_x;
+   cal_x = 360 - cal_x;
     Serial.print("x = ");
     Serial.println(cal_x); 
     time = millis();     
@@ -184,7 +194,7 @@ void loop(void)
 // }
 
 LocationData getGPSData(double angle) {
-  static LocationData data = { 0.0, 0.0, 0.0, 0.0 };
+  static LocationData data = { 0.0, 0.0, 0.0, 20.0 };
 
   while (gpsSerial.available() > 0) {
 
@@ -231,15 +241,16 @@ void sd_setup(){
   pinMode(10, OUTPUT);
   while(!SD.begin(10)){
     delay(1000);
+    Serial.println("sd setup failed");
   }
 }
 
 void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle){
-  myFile = SD.open("log.txt", FILE_WRITE);
+  myFile = SD.open("LOG.txt", FILE_WRITE);
   if (myFile){
     myFile.print("time: ");
-    unsigned long time = millis();
-    myFile.println(String(time/1000));
+    unsigned long gps_time = millis();
+    myFile.println(String(gps_time/1000));
     if(latitude != 0.0){
       myFile.print(" Latitude: ");
       myFile.print(String(latitude,9));
@@ -258,5 +269,87 @@ void sd_GPSwrite(double latitude, double longitude, double bearing, double dista
       Serial.println(angle, 9);
     }
   }
+  else{
+    Serial.println("cannot open file");
+  }
   myFile.close();
+}
+
+// void sd_GPSwrite(){
+//   myFile = SD.open("test.txt", FILE_WRITE);
+//   Serial.println("try to access sd-card");
+//   if (myFile){
+//     myFile.print("time: ");
+//     unsigned long gps_time = millis();
+//     myFile.print(String(gps_time/1000)+" ");
+//     myFile.println("問題なし");
+//   }
+//   else{
+//     Serial.println("cannot write to file");
+//   }
+//   myFile.close();
+// }
+
+//huskylens
+
+void findObject(){
+              huskylens.saveScreenshotToSDCard();
+              int n = huskylens.count();
+              int i = 0;
+              HUSKYLENSResult result_list[n];
+              while (huskylens.available()) {
+                  result_list[i] = huskylens.read();
+                  i++;
+              }
+              int left = 320;
+              int right = 0;
+              for (int j = 0; j < n; j++) {
+                  left = min(left, result_list[j].xCenter - (result_list[j].width / 2));
+                  right = max(right, result_list[j].xCenter + (result_list[j].width / 2));
+              }
+              if (right - left > 100) {
+                  Serial.println("stop");
+                  while (1) {
+                    motor.freeze(2000);
+                  }
+              }
+              if (left < 70) {
+                  motor.go_left(100);
+                  motor.freeze(0);
+              } else if (right > 250) {
+                  motor.go_right(100);
+                  motor.freeze(0);
+              } else {
+                  motor.forward(1000);
+                  motor.freeze(0);
+              }
+              delay(100);
+}
+
+
+
+
+
+void findObjectSetup(){
+  unsigned long cam_time, cam_previous_time;
+  cam_previous_time = millis();
+  cam_time = millis();
+  while((cam_time - cam_previous_time) < 500){
+    cam_time = millis();
+    if (huskylens.request()) {
+      if (huskylens.isLearned()) {
+          if (huskylens.available()) {
+            findObject();
+            return;
+          }
+      }
+    }
+  }
+
+  //見つからないときの処理
+  while(1){
+    motor.freeze(1000);
+  }
+
+ 
 }

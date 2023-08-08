@@ -20,6 +20,9 @@ void sd_write(){
     myFile.print(String(time/1000)+" ");
     myFile.println("問題なし");
   }
+  else{
+    Serial.println("cannot write to file");
+  }
   myFile.close();
 }
 

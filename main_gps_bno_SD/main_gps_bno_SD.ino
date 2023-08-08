@@ -68,7 +68,7 @@ void setup(void)
 {
 
   //SD用
-  void sd_setup();
+  sd_setup();
 
 
   //モーター用
@@ -85,7 +85,10 @@ void setup(void)
 
   
   //bno055
-  while (!Serial) delay(10);  // wait for serial port to open!
+  while (!Serial) {
+    delay(10); 
+    Serial.println("no Serial");
+  } // wait for serial port to open!
 
   Serial.println("Orientation Sensor Test"); Serial.println("");
 
@@ -102,6 +105,8 @@ void setup(void)
 void loop(void)
 {
 
+
+Serial.println("now in loop");
   double cal_x = 0;
   double error = 0;
   LocationData now_data = {0.0, 0.0, 0.0, 0.0};
@@ -113,7 +118,10 @@ void loop(void)
     now_data = getGPSData(cal_x);
     Serial.println(now_data.bearing);
     previous_time = millis();
-    if(previous_time -time > 200){
+    if(previous_time -time > 20){
+
+
+
     sensors_event_t orientationData, magnetometerData;
 
     bno.getEvent(&orientationData);
@@ -137,7 +145,7 @@ void loop(void)
     } 
     cal_x = (x + error)<360 ? x + error: x + error - 360.0;
     cal_x = (cal_x + 180) < 360? cal_x + 180: cal_x - 180; //I2cテスト用にコメントアウト
-//    cal_x = 360 - ca_x;
+   cal_x = 360 - cal_x;
     Serial.print("x = ");
     Serial.println(cal_x); 
     time = millis();     
@@ -218,15 +226,16 @@ void sd_setup(){
   pinMode(10, OUTPUT);
   while(!SD.begin(10)){
     delay(1000);
+    Serial.println("sd setup failed");
   }
 }
 
 void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle){
-  myFile = SD.open("log2.txt", FILE_WRITE);
+  myFile = SD.open("LOG.txt", FILE_WRITE);
   if (myFile){
     myFile.print("time: ");
-    unsigned long time = millis();
-    myFile.println(String(time/1000));
+    unsigned long gps_time = millis();
+    myFile.println(String(gps_time/1000));
     if(latitude != 0.0){
       myFile.print(" Latitude: ");
       myFile.print(String(latitude,9));
@@ -250,3 +259,18 @@ void sd_GPSwrite(double latitude, double longitude, double bearing, double dista
   }
   myFile.close();
 }
+
+// void sd_GPSwrite(){
+//   myFile = SD.open("test.txt", FILE_WRITE);
+//   Serial.println("try to access sd-card");
+//   if (myFile){
+//     myFile.print("time: ");
+//     unsigned long gps_time = millis();
+//     myFile.print(String(gps_time/1000)+" ");
+//     myFile.println("問題なし");
+//   }
+//   else{
+//     Serial.println("cannot write to file");
+//   }
+//   myFile.close();
+// }
