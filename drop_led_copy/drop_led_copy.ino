@@ -54,7 +54,7 @@ void sd_write(double height, double accel, double stat){
 }
 
 // 落下距離(m)の閾値[30.0 ±0.6]
-const float fallDistance = 5.0;
+const float fallDistance = 0.7;
 // 自由落下時の加速度(m/s2)の閾値[0.5]
 const float fallAccelThreshold = 9.68;
 // 着地後静止時の加速度変化(m/s2)の誤差範囲(理論値は0)[0.1]
@@ -62,9 +62,9 @@ const float landedAccelThreshold = 0.1;
 // 着地後静止時の気圧変化(Pa)の誤差範囲(理論値は0）[30]
 const float landedPressureThreshold = 30;
 // 着地後静止時の大まかな検出待機時間(自然数sec)[15]
-const unsigned long landedIdleDuration = 15;
+const unsigned long landedIdleDuration = 1;
 // 落下開始から強制分離までの時間(sec)[90]
-const unsigned long ForcequitDuration = 90;
+const unsigned long ForcequitDuration = 5;
 
 
 //BME280

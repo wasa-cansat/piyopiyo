@@ -16,7 +16,7 @@
 #include <SD.h>
 const int chipSelect = 10;
 
-double data[30][3];
+double data[100][3];
 int count = -1;
 
 
@@ -59,7 +59,7 @@ void sd_write(double height, double accel, double stat){
 }
 
 // 落下距離(m)の閾値[30.0 ±0.6]
-const float fallDistance = 5.0;
+const float fallDistance = 1.0;
 // 自由落下時の加速度(m/s2)の閾値[0.5]
 const float fallAccelThreshold = 9.68;
 // 着地後静止時の加速度変化(m/s2)の誤差範囲(理論値は0)[0.1]
@@ -67,9 +67,9 @@ const float landedAccelThreshold = 0.1;
 // 着地後静止時の気圧変化(Pa)の誤差範囲(理論値は0）[30]
 const float landedPressureThreshold = 30;
 // 着地後静止時の大まかな検出待機時間(自然数sec)[15]
-const unsigned long landedIdleDuration = 15;
+const unsigned long landedIdleDuration = 1;
 // 落下開始から強制分離までの時間(sec)[90]
-const unsigned long ForcequitDuration = 90;
+const unsigned long ForcequitDuration = 5;
 
 
 //BME280
@@ -109,9 +109,7 @@ int i,j = 0;
 
 
 void setup() {
-  pinMode(2, OUTPUT);
-  digitalWrite(2, HIGH);
-    sd_setup();
+
 
   
   Serial.begin(9600);
@@ -121,6 +119,7 @@ void setup() {
 //  pinMode(LEDR, OUTPUT);
 //  pinMode(LEDG, OUTPUT);
 //  pinMode(LEDB, OUTPUT);
+    sd_setup();
 
   //BME280
   unsigned status;
@@ -158,23 +157,22 @@ void setup() {
 void loop() {
 
   Serial.println(count);
-  if(count >= 30){
-    count = 0;
-    Serial.println("wrote in SD");
-    delay(1000);
-
-    myFile = SD.open("test.txt", FILE_WRITE);
-    for(int i = 0; i < 30; i++){
-
-      sd_write(data[i][0], data[i][1], data[i][2]);
-      delay(20);
-    }
-    myFile.close();
-
-  }
-  else{
     count++;
-  }
+  
+  // if(count >= 10){
+  //   Serial.println("wrote in SD");
+  //   delay(1000);
+
+  //   myFile = SD.open("test.txt", FILE_WRITE);
+  //   for(int i = 0; i < 10; i++){
+
+  //     sd_write(data[i][0], data[i][1], data[i][2]);
+  //     delay(20);
+  //   }
+  //   myFile.close();
+  //   count = 0;
+
+  // }
 
   
   Serial.println("in Loop");
@@ -210,6 +208,7 @@ void loop() {
   switch (state) {
     case CHECK_FALLING:
     data[count][3] = 0;
+    Serial.println("falling");
 
 
 
@@ -235,6 +234,8 @@ void loop() {
         j=0;
       }else if ((millis() - fallStartTime)/1000 >= ForcequitDuration) {
         i = landedIdleDuration*10;
+                Serial.println(i);
+
       }else{
         j++;
         if (j==2) i=0,j=0;
@@ -247,6 +248,17 @@ void loop() {
 
     case EXIT:
     data[count][3] = 2;
+    Serial.println("wrote in SD");
+    delay(1000);
+
+    myFile = SD.open("test.txt", FILE_WRITE);
+    for(int i = 0; i < count; i++){
+
+      sd_write(data[i][0], data[i][1], data[i][2]);
+      delay(20);
+    }
+    myFile.close();
+    count = 0;
 
           Serial.println("done");
 
