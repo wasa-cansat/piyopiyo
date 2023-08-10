@@ -13,7 +13,14 @@
   分離＝緑色
   と光るので，LEDを見て今の処理状態を確認して下さい。
 */
+#include "motor.h"
+Motor motor;
+
+
 #include <SD.h>
+
+
+
 const int chipSelect = 10;   
 
 double data[100][3];
@@ -207,7 +214,7 @@ void loop() {
   //ここからメインコード 
   switch (state) {
     case CHECK_FALLING:
-    data[count][3] = 0;
+    data[count][2] = 0;
     Serial.println("falling");
 
 
@@ -222,7 +229,7 @@ void loop() {
       break;
       
     case CHECK_LANDED:
-    data[count][3] = 1;
+    data[count][2] = 1;
 
           Serial.println("landed");
 
@@ -247,10 +254,8 @@ void loop() {
       break;
 
     case EXIT:
-    data[count][3] = 2;
+    data[count][2] = 2;
     Serial.println("wrote in SD");
-    delay(1000);
-
     myFile = SD.open("test.txt", FILE_WRITE);
     for(int i = 0; i < count; i++){
 
@@ -258,9 +263,9 @@ void loop() {
       delay(20);
     }
     myFile.close();
-    count = 0;
 
           Serial.println("done");
+          motor.forward(2);
 
 //      digitalWrite(LEDG, LOW);
     while(1){
