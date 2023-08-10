@@ -14,7 +14,7 @@
   と光るので，LEDを見て今の処理状態を確認して下さい。
 */
 #include <SD.h>
-const int chipSelect = 10;
+const int chipSelect = 10;   
 
 double data[100][3];
 int count = -1;
@@ -234,7 +234,7 @@ void loop() {
         j=0;
       }else if ((millis() - fallStartTime)/1000 >= ForcequitDuration) {
         i = landedIdleDuration*10;
-                Serial.println(i);
+        Serial.println(i);
 
       }else{
         j++;
