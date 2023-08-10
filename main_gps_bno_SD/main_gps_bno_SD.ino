@@ -106,14 +106,14 @@ void loop(void)
 {
 
 
-Serial.println("now in loop");
+  Serial.println("now in loop");
   double cal_x = 0;
   double error = 0;
   LocationData now_data = {0.0, 0.0, 0.0, 0.0};
 
   time = millis();
   
-  while(1){
+  for(int i = 0; i<5000; i++){
 
     now_data = getGPSData(cal_x);
     Serial.println(now_data.bearing);
@@ -168,6 +168,11 @@ Serial.println("now in loop");
       motor.go_left(0);
       Serial.println("left");
     }
+  }
+
+  while(1)
+  {
+    
   }
 }
 
@@ -260,17 +265,17 @@ void sd_GPSwrite(double latitude, double longitude, double bearing, double dista
   myFile.close();
 }
 
-// void sd_GPSwrite(){
-//   myFile = SD.open("test.txt", FILE_WRITE);
-//   Serial.println("try to access sd-card");
-//   if (myFile){
-//     myFile.print("time: ");
-//     unsigned long gps_time = millis();
-//     myFile.print(String(gps_time/1000)+" ");
-//     myFile.println("問題なし");
-//   }
-//   else{
-//     Serial.println("cannot write to file");
-//   }
-//   myFile.close();
-// }
+ void sd_GPSwrite(){
+   myFile = SD.open("test.txt", FILE_WRITE);
+   Serial.println("try to access sd-card");
+   if (myFile){
+     myFile.print("time: ");
+     unsigned long gps_time = millis();
+     myFile.print(String(gps_time/1000)+" ");
+     myFile.println("問題なし");
+   }
+   else{
+     Serial.println("cannot write to file");
+   }
+   myFile.close();
+ }

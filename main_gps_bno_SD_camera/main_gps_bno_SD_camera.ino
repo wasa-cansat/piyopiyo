@@ -14,6 +14,8 @@
 HUSKYLENS huskylens;
 void findObject();
 void findObjectSetup();
+bool cam_sw = false;
+
 
 
 //GPS関連
@@ -122,18 +124,26 @@ void loop(void)
   LocationData now_data = {0.0, 0.0, 0.0, 20.0};
 
   time = millis();
+
   
   while(1){
 
-    if(now_data.distance < 10){
-      findObjectSetup();
-      continue;
+    if (huskylens.request()) {
+      if (huskylens.isLearned()) {
+          if (huskylens.available()) {
+            findObject();
+            continue;
+          }
+          else if(cam_sw){
+            findObjectSetup();
+          }
+      }
     }
 
     now_data = getGPSData(cal_x);
     Serial.println(now_data.bearing);
     previous_time = millis();
-    if(previous_time -time > 20){
+    if(previous_time -time > 50){
 
 
 
@@ -293,6 +303,7 @@ void sd_GPSwrite(double latitude, double longitude, double bearing, double dista
 //huskylens
 
 void findObject(){
+  cam_sw = true;
               huskylens.saveScreenshotToSDCard();
               int n = huskylens.count();
               int i = 0;
@@ -308,19 +319,22 @@ void findObject(){
                   right = max(right, result_list[j].xCenter + (result_list[j].width / 2));
               }
               if (right - left > 100) {
-                  Serial.println("stop");
+                  Serial.println("husky_stop");
                   while (1) {
                     motor.freeze(2000);
                   }
               }
               if (left < 70) {
                   motor.go_left(100);
+                  Serial.println("husky_left");
                   motor.freeze(0);
               } else if (right > 250) {
                   motor.go_right(100);
+                  Serial.println("husky_right");
                   motor.freeze(0);
               } else {
                   motor.forward(1000);
+                  Serial.println("husky_forward");
                   motor.freeze(0);
               }
               delay(100);
@@ -336,20 +350,15 @@ void findObjectSetup(){
   cam_time = millis();
   while((cam_time - cam_previous_time) < 500){
     cam_time = millis();
-    if (huskylens.request()) {
-      if (huskylens.isLearned()) {
           if (huskylens.available()) {
             findObject();
             return;
           }
-      }
-    }
+
   }
 
   //見つからないときの処理
-  while(1){
-    motor.freeze(1000);
-  }
-
+  cam_sw = false;
+  
  
 }
