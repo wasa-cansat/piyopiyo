@@ -265,17 +265,17 @@ void sd_GPSwrite(double latitude, double longitude, double bearing, double dista
   myFile.close();
 }
 
- void sd_GPSwrite(){
-   myFile = SD.open("test.txt", FILE_WRITE);
-   Serial.println("try to access sd-card");
-   if (myFile){
-     myFile.print("time: ");
-     unsigned long gps_time = millis();
-     myFile.print(String(gps_time/1000)+" ");
-     myFile.println("問題なし");
-   }
-   else{
-     Serial.println("cannot write to file");
-   }
-   myFile.close();
- }
+//  void sd_GPSwrite(){
+//    myFile = SD.open("test.txt", FILE_WRITE);
+//    Serial.println("try to access sd-card");
+//    if (myFile){
+//      myFile.print("time: ");
+//      unsigned long gps_time = millis();
+//      myFile.print(String(gps_time/1000)+" ");
+//      myFile.println("問題なし");
+//    }
+//    else{
+//      Serial.println("cannot write to file");
+//    }
+//    myFile.close();
+//  }
