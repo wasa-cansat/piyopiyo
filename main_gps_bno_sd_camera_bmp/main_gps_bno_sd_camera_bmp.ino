@@ -5,6 +5,7 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 #include <SD.h>
+#include <SPI.h>
 #include "motor.h"
 #include "HUSKYLENS.h"
 #include <Adafruit_BMP280.h>
