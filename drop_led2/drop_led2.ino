@@ -39,6 +39,10 @@ File myFile;
 #include <Adafruit_BMP280.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
+#include <Servo.h>
+Servo myservo; 
+
+
 
 
 
@@ -126,7 +130,16 @@ void setup() {
 //  pinMode(LEDR, OUTPUT);
 //  pinMode(LEDG, OUTPUT);
 //  pinMode(LEDB, OUTPUT);
-    sd_setup();
+//    sd_setup();
+
+  
+  //BNO055
+  while(!bno.begin())
+  {
+
+    Serial.println("no bno");
+//    digitalWrite(LEDR, LOW);
+  }
 
   //BME280
   unsigned status;
@@ -144,14 +157,6 @@ void setup() {
 
   }
 
-  //BNO055
-  if(!bno.begin())
-  {
-
-    Serial.println("no bno");
-//    digitalWrite(LEDR, LOW);
-    while(1);
-  }
 
 
 
@@ -265,6 +270,13 @@ void loop() {
     myFile.close();
 
           Serial.println("done");
+          myservo.attach(6);
+
+  myservo.write(90);
+  delay(1000);
+  myservo.write(160);
+  delay(1000);
+          
           motor.forward(2);
 
 //      digitalWrite(LEDG, LOW);

@@ -593,7 +593,7 @@ void fall_detect(){
       // サーボモーターを180度回転
       state = COMPLETE;
       Serial.println("complete");
-      ;
+      
 
     case COMPLETE:
       break;
