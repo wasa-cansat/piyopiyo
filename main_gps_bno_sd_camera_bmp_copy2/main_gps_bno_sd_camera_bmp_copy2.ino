@@ -4,11 +4,11 @@
 #include <utility/imumaths.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
-#include <SD.h>
 #include <SPI.h>
 #include "motor.h"
 #include "HUSKYLENS.h"
 #include <Adafruit_BMP280.h>
+#include <SD.h>
 
 
 #include <Servo.h>
@@ -67,24 +67,24 @@ Motor motor;
 //SD関連
 File myFile;
 void sd_setup();
-// const int chipSelect = 10;
+ const int chipSelect = 10;
 void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle);
-
-//落下検知
-void sd_write(double height, double accel, double stat){
-  if (myFile){
-
-      myFile.print("height");
-      myFile.println(height);
-      myFile.print("accel");
-      myFile.println(accel);
-      myFile.print("status");
-      myFile.println(stat);
-    }
-  else{
-    Serial.println("cannot write to file");
-  }
-}
+//
+////落下検知
+//void sd_write(double height, double accel, double stat){
+//  if (myFile){
+//
+//      myFile.print("height");
+//      myFile.println(height);
+//      myFile.print("accel");
+//      myFile.println(accel);
+//      myFile.print("status");
+//      myFile.println(stat);
+//    }
+//  else{
+//    Serial.println("cannot write to file");
+//  }
+//}
 
 void fall_detect();
 
@@ -140,7 +140,7 @@ int i,j = 0;
 unsigned long time, previous_time;
 
 
-void setup(void)
+void setup(void) 
 {
 
   //気圧
@@ -163,7 +163,6 @@ void setup(void)
   lastPressure = basePressure;
   
   //SD用
-  sd_setup();
 
   //servo
   myservo.attach(6);
@@ -223,10 +222,13 @@ void loop(void)
 
 
   fall_detect();
+  
   myservo.write(40);
   delay(2000);
   myservo.write(180);
   delay(1000);
+
+  sd_setup();
 
 
   Serial.println("now in loop");
@@ -254,7 +256,7 @@ void loop(void)
     now_data = getGPSData(cal_x);
     previous_time = millis();
     if(previous_time -time > 100){
-    Serial.println(now_data.bearing);
+      Serial.println(now_data.bearing);
 
 
 
@@ -357,7 +359,7 @@ LocationData getGPSData(double angle) {
   }
 }
 
-//SD用
+////SD用
 
 void sd_setup(){
   pinMode(10, OUTPUT);
@@ -397,20 +399,6 @@ void sd_GPSwrite(double latitude, double longitude, double bearing, double dista
   myFile.close();
 }
 
-// void sd_GPSwrite(){
-//   myFile = SD.open("test.txt", FILE_WRITE);
-//   Serial.println("try to access sd-card");
-//   if (myFile){
-//     myFile.print("time: ");
-//     unsigned long gps_time = millis();
-//     myFile.print(String(gps_time/1000)+" ");
-//     myFile.println("問題なし");
-//   }
-//   else{
-//     Serial.println("cannot write to file");
-//   }
-//   myFile.close();
-// }
 
 //huskylens
 
@@ -477,7 +465,7 @@ void findObjectSetup(){
 
 
 void fall_detect(){
-    int count = -1;
+  int count = -1;
   double data[200][3];
   while(1){
     Serial.println(count);
@@ -572,14 +560,14 @@ void fall_detect(){
 
     case EXIT:
     data[count][2] = 2;
-    Serial.println("wrote in SD");
-    myFile = SD.open("test.txt", FILE_WRITE);
-    for(int i = 0; i < count; i++){
-
-      sd_write(data[i][0], data[i][1], data[i][2]);
-      delay(20);
-    }
-    myFile.close();
+//    Serial.println("wrote in SD");
+//    myFile = SD.open("test.txt", FILE_WRITE);
+//    for(int i = 0; i < count; i++){
+//
+//      sd_write(data[i][0], data[i][1], data[i][2]);
+//      delay(20);
+//    }
+//    myFile.close();
 
           Serial.println("done");
           delay(1000);

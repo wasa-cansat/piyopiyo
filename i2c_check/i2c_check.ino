@@ -33,6 +33,7 @@ void loop()
       Serial.println("  !");
       nDevices++;
     }
+    
     else if (error == 4)
     {
       Serial.print("Unknown error at address 0x");
