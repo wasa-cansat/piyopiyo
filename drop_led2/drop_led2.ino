@@ -138,6 +138,7 @@ void setup() {
   {
 
     Serial.println("no bno");
+    delay(1000);
 //    digitalWrite(LEDR, LOW);
   }
 
