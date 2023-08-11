@@ -5,6 +5,7 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 #include <SD.h>
+#include <SPI.h>
 #include "motor.h"
 #include "HUSKYLENS.h"
 #include <Adafruit_BMP280.h>
@@ -42,7 +43,7 @@ struct LocationData {
   double distance;
 };
 
-void startTime();
+// void startTime();p
 LocationData getGPSData(double angle);
 
 
@@ -66,7 +67,7 @@ Motor motor;
 //SD関連
 File myFile;
 void sd_setup();
-const int chipSelect = 10;
+// const int chipSelect = 10;
 void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle);
 
 //落下検知
@@ -585,15 +586,15 @@ void fall_detect(){
           
 
 //      digitalWrite(LEDG, LOW);
-    while(1){
+    // while(1){
 
-    }
+    // }
       
       
-      // サーボモーターを180度回転
-      state = COMPLETE;
-      Serial.println("complete");
-      
+    //   // サーボモーターを180度回転
+    //   state = COMPLETE;
+    //   Serial.println("complete");
+    //   ;
 
     case COMPLETE:
       break;

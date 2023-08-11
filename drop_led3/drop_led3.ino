@@ -274,10 +274,10 @@ void loop() {
     }
       
       
-      // サーボモーターを180度回転
-      state = COMPLETE;
-      Serial.println("complete");
-      break;
+    // サーボモーターを180度回転
+    state = COMPLETE;
+    Serial.println("complete");  //ここは一生たどりつかない？
+    break;
 
     case COMPLETE:
       break;
