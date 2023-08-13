@@ -1,7 +1,6 @@
 //前回実験の際に使用していたコード
 
 #ifndef MAIN_H
-
 #define MAIN_H
 //重複定義の回避
 #include <TinyGPS++.h>
