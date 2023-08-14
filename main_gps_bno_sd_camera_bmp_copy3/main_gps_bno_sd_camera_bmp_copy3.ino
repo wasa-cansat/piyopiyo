@@ -4,15 +4,21 @@
 #include <utility/imumaths.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
-#include <SD.h>
 #include <SPI.h>
 #include "motor.h"
 #include "HUSKYLENS.h"
 #include <Adafruit_BMP280.h>
+
+
 #include <Servo.h>
+
+
+
 
 //servo
 Servo myservo; 
+
+
 
 //HUSKYLENS
 HUSKYLENS huskylens;
@@ -20,22 +26,28 @@ void findObject();
 void findObjectSetup();
 bool cam_sw = false;
 
-//35.704978,139.713760
+//35.707542,139.66114  35.707717,139.661239
 //GPS関連
 TinyGPSPlus gps;
-double destLatitude = 35.704978;    // 目的地の緯度
-double destLongitude = 139.713760;  // 目的地の経度
+double destLatitude = 35.70765559;    // 目的地の緯度
+double destLongitude = 139.66126654;  // 目的地の経度
+
 int RX_PIN = 0;
 int TX_PIN = 1;
+
 SoftwareSerial gpsSerial(RX_PIN, TX_PIN);
+
 struct LocationData {
   double latitude;
   double longitude;
   double bearing;
   double distance;
 };
-// void startTime();
+
+// void startTime();p
 LocationData getGPSData(double angle);
+
+
 
 //bno055関連
 double maxx;
@@ -47,23 +59,41 @@ uint16_t BNO055_SAMPLERATE_DELAY_MS = 100;
 //                                   id, address
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
+
+
 //モーター関連
 Motor motor;
 
-//SD関連
-File myFile;
-void sd_setup();
-// const int chipSelect = 10;
-void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle);
 
-//落下検知
-void sd_write(double height, double accel, double stat);
+////SD関連
+//File myFile;
+//void sd_setup();
+//// const int chipSelect = 10;
+//void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle);
+//
+////落下検知
+//void sd_write(double height, double accel, double stat){
+//  if (myFile){
+//
+//      myFile.print("height");
+//      myFile.println(height);
+//      myFile.print("accel");
+//      myFile.println(accel);
+//      myFile.print("status");
+//      myFile.println(stat);
+//    }
+//  else{
+//    Serial.println("cannot write to file");
+//  }
+//}
+
 void fall_detect();
+
 
 // 落下距離(m)の閾値[30.0 ±0.6]
 const float fallDistance = 1.0;
 // 自由落下時の加速度(m/s2)の閾値[0.5]
-const float fallAccelThreshold = 0.0;
+const float fallAccelThreshold = 9.67;
 // 着地後静止時の加速度変化(m/s2)の誤差範囲(理論値は0)[0.1]
 const float landedAccelThreshold = 0.1;
 // 着地後静止時の気圧変化(Pa)の誤差範囲(理論値は0）[30]
@@ -72,6 +102,7 @@ const float landedPressureThreshold = 30;
 const unsigned long landedIdleDuration = 1;
 // 落下開始から強制分離までの時間(sec)[90]
 const unsigned long ForcequitDuration = 5;
+
 
 //BME280
 #define BME_SCK 13
@@ -106,9 +137,16 @@ float lastPressure;
 //CHECK_LANDED内のfor文用
 int i,j = 0;
 
+
 unsigned long time, previous_time;
 
-void setup(void)
+//
+  double data_gps[80][4];
+  int count_gps = 0;
+
+
+
+void setup(void) 
 {
 
   //気圧
@@ -116,14 +154,14 @@ void setup(void)
   status = bmp.begin(0x76); 
   if (!status) { 
 //        digitalWrite(LEDR, LOW);
-    Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
+        Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
                       "try a different address!"));
     Serial.print("SensorID was: 0x"); Serial.println(bmp.sensorID(),16);
     Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
     Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
     Serial.print("        ID of 0x60 represents a BME 280.\n");
     Serial.print("        ID of 0x61 represents a BME 680.\n");
-    while (1) delay(10);
+           while (1) delay(10);
 
   }
   // 地表の気圧を読み取る
@@ -131,16 +169,21 @@ void setup(void)
   lastPressure = basePressure;
   
   //SD用
-  sd_setup();
 
   //servo
   myservo.attach(6);
   myservo.write(180);
-  delay(10000);
+  digitalWrite(6, HIGH);
+  delay(1000);
   myservo.write(90);
-  delay(10000);
+  digitalWrite(6, LOW);
+  delay(1000);
   myservo.write(160);
+  digitalWrite(2, HIGH);
   
+
+
+
   //モーター用
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
@@ -153,13 +196,14 @@ void setup(void)
   pinMode(RX_PIN, INPUT);
   pinMode(TX_PIN, OUTPUT);
 
+  
   //bno055
   while (!Serial) {
     delay(10); 
     Serial.println("no Serial");
   } // wait for serial port to open!
 
-  Serial.println("Orientation Sensor Test"); //Serial.println("");
+  Serial.println("Orientation Sensor Test"); Serial.println("");
 
   /* Initialise the sensor */
   if (!bno.begin())
@@ -172,22 +216,33 @@ void setup(void)
   //camera
   Wire.begin();
   while (!huskylens.begin(Wire))
-  {
-    Serial.println(F("Begin failed!"));
-    Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
-    Serial.println(F("2.Please recheck the connection."));
-    delay(100);
-  }
+ {
+       Serial.println(F("Begin failed!"));
+       Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
+       Serial.println(F("2.Please recheck the connection."));
+       delay(100);
+ }
+
 }
 
 
-void loop(void){
+void loop(void)
+{
+
 
   fall_detect();
+  
   myservo.write(40);
+    digitalWrite(6, HIGH);
+
   delay(2000);
   myservo.write(180);
+    digitalWrite(6, LOW);
+
   delay(1000);
+
+
+
 
   Serial.println("now in loop");
   double cal_x = 0;
@@ -196,17 +251,18 @@ void loop(void){
 
   time = millis();
 
+  
   while(1){
 
     if (huskylens.request()) {
       if (huskylens.isLearned()) {
-        if (huskylens.available()) {
-          findObject();
-          continue;
-        }
-        else if(cam_sw){
-          findObjectSetup();
-        }
+          if (huskylens.available()) {
+            findObject();
+            continue;
+          }
+          else if(cam_sw){
+            findObjectSetup();
+          }
       }
     }
 
@@ -214,36 +270,41 @@ void loop(void){
     previous_time = millis();
     if(previous_time -time > 100){
       Serial.println(now_data.bearing);
-      sensors_event_t orientationData, magnetometerData;
-      bno.getEvent(&orientationData);
-      bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
-      double x = orientationData.orientation.x;
-      double y = orientationData.orientation.y;
-      double z = orientationData.orientation.z;
-      double mag_x = magnetometerData.magnetic.x;
-      double mag_y = magnetometerData.magnetic.y;
-      double mag_z = magnetometerData.magnetic.z;
 
-      if(abs(mag_y + 0.06) < 0.0001 || abs(mag_y + 8.06) < 0.0001 || (mag_x + mag_y + mag_z) > 2000){
+
+
+
+    sensors_event_t orientationData, magnetometerData;
+
+    bno.getEvent(&orientationData);
+    bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
+  
+    double x = orientationData.orientation.x;
+    double y = orientationData.orientation.y;
+    double z = orientationData.orientation.z;
+    double mag_x = magnetometerData.magnetic.x;
+    double mag_y = magnetometerData.magnetic.y;
+    double mag_z = magnetometerData.magnetic.z;
+    if(abs(mag_y + 0.06) < 0.0001 || abs(mag_y + 8.06) < 0.0001 || (mag_x + mag_y + mag_z) > 2000){
         // Serial.println("not valid");
-      }
-      else{
-        error = atan2(mag_y, mag_x)*180/PI + 180 - x;
-        // Serial.print("mag_x = ");
-        // Serial.println(atan2(mag_y, mag_x)*180/PI + 180);
-        // Serial.print("error: ");
-        // Serial.println(error);
-      } 
-      cal_x = (x + error)<360 ? x + error: x + error - 360.0;
-      cal_x = (cal_x + 180) < 360? cal_x + 180: cal_x - 180; //I2cテスト用にコメントアウト
-      cal_x = 360 - cal_x;
-      Serial.print("x = ");
-      Serial.println(cal_x); 
-      time = millis();     
+    }
+    else{
+          error = atan2(mag_y, mag_x)*180/PI + 180 - x;
+//        Serial.print("mag_x = ");
+//        Serial.println(atan2(mag_y, mag_x)*180/PI + 180);
+//        Serial.print("error: ");
+//        Serial.println(error);
+    } 
+    cal_x = (x + error)<360 ? x + error: x + error - 360.0;
+    cal_x = (cal_x + 180) < 360? cal_x + 180: cal_x - 180; //I2cテスト用にコメントアウト
+   cal_x = 360 - cal_x;
+    Serial.print("x = ");
+    Serial.println(cal_x); 
+    time = millis();     
     }
 
 
-    // Serial.println(data.bearing);
+//    Serial.println(data.bearing);
     if(abs(cal_x - now_data.bearing) < 10.0)
     {
       motor.forward(0);
@@ -252,15 +313,22 @@ void loop(void){
     else if(((now_data.bearing - cal_x) > 0 ? now_data.bearing - cal_x: now_data.bearing + 360 - cal_x) < 180 )
     {
       motor.go_right(0);
-      // Serial.println("right");
+//      Serial.println("right");
     }
     else
     {
       motor.go_left(0);
-      // Serial.println("left");
+//      Serial.println("left");
     }
   }
 }
+
+
+//GPS関連
+// void startTime() {
+//   unsigned long startTime = millis();
+//   Serial.print(String(startTime / 1000) + "秒　　　");
+// }
 
 LocationData getGPSData(double angle) {
   static LocationData data = { 0.0, 0.0, 0.0, 20.0 };
@@ -281,6 +349,9 @@ LocationData getGPSData(double angle) {
       data.distance = TinyGPSPlus::distanceBetween(
         data.latitude, data.longitude,
         destLatitude, destLongitude);
+      
+//      unsigned long startTime = millis();
+//      Serial.println(String(startTime / 1000) + "秒　　　");
       if(data.latitude != 0.0){
         Serial.print("現在地（");
         Serial.print(data.latitude, 6);
@@ -294,66 +365,60 @@ LocationData getGPSData(double angle) {
         Serial.print("距離: ");
         Serial.print(data.distance, 6);
         Serial.println("m");
-        sd_GPSwrite(data.latitude, data.longitude, data.bearing, data.distance, angle);
+        if(count_gps % 15 == 0){
+          data_gps[count_gps/15][0] = data.latitude;
+          data_gps[count_gps/15][1] = data.longitude;
+          data_gps[count_gps/15][2] = angle;
+          data_gps[count_gps/15][3] = (double) millis();
+        }
+
+        count_gps++;
         return data;
       }
     }
   }
 }
 
-//SD用
-void sd_setup(){
-  pinMode(10, OUTPUT);
-  while(!SD.begin(10)){
-    delay(1000);
-    Serial.println("sd setup failed");
-  }
-}
+////SD用
+//
+//void sd_setup(){
+//  pinMode(10, OUTPUT);
+//  while(!SD.begin(10)){
+//    delay(1000);
+//    Serial.println("sd setup failed");
+//  }
+//}
+//
+//void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle){
+//  myFile = SD.open("LOG.txt", FILE_WRITE);
+//  if (myFile){
+//    myFile.print("time: ");
+//    unsigned long gps_time = millis();
+//    myFile.println(String(gps_time/1000));
+//    if(latitude != 0.0){
+//      myFile.print(" Latitude: ");
+//      myFile.print(String(latitude,9));
+//      Serial.println(latitude, 9);
+//      myFile.print(" longitude: ");
+//      myFile.print(String(longitude,9));
+//      Serial.println(longitude, 9);
+//      myFile.print(" bearing: ");
+//      myFile.print(String(bearing,9));
+//      Serial.println(bearing, 9);
+//      myFile.print(" distance: ");
+//      myFile.println(String(distance,9));
+//      Serial.println(distance, 9);
+//      myFile.print(" angle: ");
+//      myFile.println(String(angle,9));
+//      Serial.println(angle, 9);
+//    }
+//  }
+//  else{
+//    Serial.println("cannot open file");
+//  }
+//  myFile.close();
+//}
 
-void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle){
-  myFile = SD.open("LOG.txt", FILE_WRITE);
-  if (myFile){
-    myFile.print("time: ");
-    unsigned long gps_time = millis();
-    myFile.println(String(gps_time/1000));
-    if(latitude != 0.0){
-      myFile.print(" Latitude: ");
-      myFile.print(String(latitude,9));
-      Serial.println(latitude, 9);
-      myFile.print(" longitude: ");
-      myFile.print(String(longitude,9));
-      Serial.println(longitude, 9);
-      myFile.print(" bearing: ");
-      myFile.print(String(bearing,9));
-      Serial.println(bearing, 9);
-      myFile.print(" distance: ");
-      myFile.println(String(distance,9));
-      Serial.println(distance, 9);
-      myFile.print(" angle: ");
-      myFile.println(String(angle,9));
-      Serial.println(angle, 9);
-    }
-  }
-  else{
-    Serial.println("cannot open file");
-  }
-  myFile.close();
-}
-
-// void sd_GPSwrite(){
-//   myFile = SD.open("test.txt", FILE_WRITE);
-//   Serial.println("try to access sd-card");
-//   if (myFile){
-//     myFile.print("time: ");
-//     unsigned long gps_time = millis();
-//     myFile.print(String(gps_time/1000)+" ");
-//     myFile.println("問題なし");
-//   }
-//   else{
-//     Serial.println("cannot write to file");
-//   }
-//   myFile.close();
-// }
 
 //huskylens
 
@@ -377,6 +442,23 @@ void findObject(){
       Serial.println("husky_stop");
       while (1) {
         motor.freeze(2000);
+        while(1){
+          Serial.println("start");
+          for(int i =0; i<80; i++){
+            Serial.print("latitude: ");
+            Serial.print(data_gps[i][0]);
+            Serial.print("longitude: ");
+            Serial.print(data_gps[i][1]);
+            Serial.print("angle: ");
+            Serial.print(data_gps[i][2]);
+            Serial.print("time: ");
+            Serial.print(data_gps[i][3]);
+            delay(100);
+          }
+          delay(1000);
+          Serial.println();
+        }
+
       }
   }
   if (left < 70) {
@@ -395,6 +477,10 @@ void findObject(){
   delay(100);
 }
 
+
+
+
+
 void findObjectSetup(){
   unsigned long cam_time, cam_previous_time;
   cam_previous_time = millis();
@@ -407,29 +493,17 @@ void findObjectSetup(){
           }
 
   }
+
   //見つからないときの処理
   cam_sw = false;
-}
-
-void sd_write(double height, double accel, double stat){
-  if (myFile){
-
-      myFile.print("height");
-      myFile.println(height);
-      myFile.print("accel");
-      myFile.println(accel);
-      myFile.print("status");
-      myFile.println(stat);
-    }
-  else{
-    Serial.println("cannot write to file");
-  }
+  
+ 
 }
 
 
 void fall_detect(){
-    int count = -1;
-  double data[200][3];
+  int count = -1;
+  // double data[200][3];
   while(1){
     Serial.println(count);
     count++;
@@ -449,6 +523,7 @@ void fall_detect(){
 
   // }
 
+  
   Serial.println("in Loop");
   float pressure = bmp.readPressure();
   float altitude = 44330 * ( 1 - pow(pressure/basePressure, 1/5.255) );
@@ -465,8 +540,8 @@ void fall_detect(){
 //  digitalWrite(LEDR, HIGH);
 //  digitalWrite(LEDG, HIGH);
 //  digitalWrite(LEDB, HIGH);
-  data[count][0] = altitude;
-  data[count][1] = accel;
+//   data[count][0] = altitude;
+//   data[count][1] = accel;
 
   // 最高高度を更新
   if (altitude > highestAltitude) {
@@ -476,14 +551,19 @@ void fall_detect(){
   }
   Serial.println(altitude);
 
+  
+
   //ここからメインコード 
   switch (state) {
     case CHECK_FALLING:
-      data[count][2] = 0;
-      Serial.println("falling");
-      // digitalWrite(LEDB, LOW);
+    // data[count][2] = 0;
+    Serial.println("falling");
+
+
+
+//      digitalWrite(LEDB, LOW);
       // 現在高度が最高地点からfallDiatance以上落下したとき、かつ加速度がfallAccelThreshold以下になったときに，落下を検出
-      if (abs(accel - fallAccelThreshold) > 2.0) {
+      if (abs(accel - fallAccelThreshold) > 1.0) {
         fallStartTime = millis();
         state = CHECK_LANDED;
         lastPressure = basePressure;
@@ -491,24 +571,24 @@ void fall_detect(){
       break;
       
     case CHECK_LANDED:
-      data[count][2] = 1;
-      Serial.println("landed");
-      // digitalWrite(LEDR, LOW);
+    // data[count][2] = 1;
+
+          Serial.println("landed");
+
+//      digitalWrite(LEDR, LOW);
       // 100*10ms=1sec*landedIdleDuration秒以上の間，加速度がほぼ1.0G（自由落下終了=重力加速度のみ)，かつ加速度変化がほぼない，かつ気圧の変化がほぼない場合、着地と判断。
       // また，落下開始から一定時間経過した時は，無条件で着地と判断(強制分離)。
       if (abs(fallAccelThreshold - accel) <= 0.2 && abs(accel - lastAccel) <= landedAccelThreshold && abs(pressure - lastPressure) <= landedPressureThreshold){
         i++;
         j=0;
-      }else if((millis() - fallStartTime)/1000 >= ForcequitDuration) {
+      }else if ((millis() - fallStartTime)/1000 >= ForcequitDuration) {
         i = landedIdleDuration*10;
         Serial.println(i);
+
       }else{
         j++;
-        if (j == 2) {
-          i = 0;
-          j = 0;
-        }
-      }
+        if (j==2) i=0,j=0;
+      };
       delay(100);
       if (i <= 1) lastPressure = pressure; // 初回時の気圧を記憶
       if (i >= landedIdleDuration*10) state = EXIT;
@@ -516,20 +596,36 @@ void fall_detect(){
       break;
 
     case EXIT:
-      data[count][2] = 2;
-      Serial.println("wrote in SD");
-      myFile = SD.open("test.txt", FILE_WRITE);
-      for(int i = 0; i < count; i++){
-        sd_write(data[i][0], data[i][1], data[i][2]);
-        delay(20);
-      }
-      myFile.close();
-      Serial.println("done");
-      delay(1000);
-      return;       
+    // data[count][2] = 2;
+//    Serial.println("wrote in SD");
+//    myFile = SD.open("test.txt", FILE_WRITE);
+//    for(int i = 0; i < count; i++){
+//
+//      sd_write(data[i][0], data[i][1], data[i][2]);
+//      delay(20);
+//    }
+//    myFile.close();
+
+          Serial.println("done");
+          delay(1000);
+          return;
+          
+
+//      digitalWrite(LEDG, LOW);
+    // while(1){
+
+    // }
+      
+      
+    //   // サーボモーターを180度回転
+    //   state = COMPLETE;
+    //   Serial.println("complete");
+    //   ;
 
     case COMPLETE:
-      break; 
+      break;
+
+    
   }
 
   // 前回の加速度を更新

@@ -91,7 +91,7 @@ void fall_detect();
 // 落下距離(m)の閾値[30.0 ±0.6]
 const float fallDistance = 1.0;
 // 自由落下時の加速度(m/s2)の閾値[0.5]
-const float fallAccelThreshold = 0.0;
+const float fallAccelThreshold = 9.67;
 // 着地後静止時の加速度変化(m/s2)の誤差範囲(理論値は0)[0.1]
 const float landedAccelThreshold = 0.1;
 // 着地後静止時の気圧変化(Pa)の誤差範囲(理論値は0）[30]

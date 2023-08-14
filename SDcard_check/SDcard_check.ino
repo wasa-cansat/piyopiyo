@@ -4,6 +4,7 @@ File myFile;
 
 unsigned long time;  // 時間を記録
 
+int n = 0;
 
 void sd_setup(){
   pinMode(10, OUTPUT);
@@ -28,10 +29,13 @@ void sd_write(){
 
 void setup() {
   Serial.begin(115200);
+  Serail.println("start")
   sd_setup();
+  Serial.println("done");
 }
 
 void loop() {
   sd_write();
+  Serial.println(n); n++;
   delay(1000);
 }
