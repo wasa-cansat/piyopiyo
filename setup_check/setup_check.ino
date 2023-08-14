@@ -14,11 +14,11 @@
 //servo
 Servo myservo; 
 
-//HUSKYLENS
-HUSKYLENS huskylens;
-void findObject();
-void findObjectSetup();
-bool cam_sw = false;
+// //HUSKYLENS
+// HUSKYLENS huskylens;
+// void findObject();
+// void findObjectSetup();
+// bool cam_sw = false;
 
 //35.704978,139.713760
 //GPS関連
@@ -108,9 +108,12 @@ int i,j = 0;
 
 unsigned long time, previous_time;
 
+int n= 0;
+
 void setup(void)
 {
-
+  Serial.begin(115200);
+  Serial.println(n); n++;
   //気圧
   unsigned status;
   status = bmp.begin(0x76); 
@@ -129,30 +132,34 @@ void setup(void)
   // 地表の気圧を読み取る
   basePressure = bmp.readPressure();
   lastPressure = basePressure;
-  
-  //SD用
-  sd_setup();
 
+  Serial.println(n); n++;
+  //SD用
+  // sd_setup();
+
+  Serial.println(n); n++;
   //servo
   myservo.attach(6);
   myservo.write(180);
-  delay(10000);
+  delay(2000);
   myservo.write(90);
-  delay(10000);
+  delay(2000);
   myservo.write(160);
   
+  Serial.println(n); n++;
   //モーター用
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 
+  Serial.println(n); n++;
   //GPS
-  Serial.begin(115200);
   gpsSerial.begin(9600);
   pinMode(RX_PIN, INPUT);
   pinMode(TX_PIN, OUTPUT);
 
+  Serial.println(n); n++;
   //bno055
   while (!Serial) {
     delay(10); 
@@ -161,6 +168,7 @@ void setup(void)
 
   Serial.println("Orientation Sensor Test"); //Serial.println("");
 
+  Serial.println(n); n++;
   /* Initialise the sensor */
   if (!bno.begin())
   {
@@ -169,17 +177,16 @@ void setup(void)
     while (1);
   }
 
-  //camera
-  Wire.begin();
-  while (!huskylens.begin(Wire))
-  {
-    Serial.println(F("Begin failed!"));
-    Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
-    Serial.println(F("2.Please recheck the connection."));
-    delay(100);
-  }
-  
-  Serial.println("no issues in setup")
+  Serial.println(n); n++;
+  // //camera
+  // Wire.begin();
+  // while (!huskylens.begin(Wire))
+  // {
+  //   Serial.println(F("Begin failed!"));
+  //   Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
+  //   Serial.println(F("2.Please recheck the connection."));
+  //   delay(100);
+  Serial.println("no issues in setup");
 }
 
 void sd_setup(){
@@ -187,5 +194,11 @@ void sd_setup(){
   while(!SD.begin(10)){
     delay(1000);
     Serial.println("sd setup failed");
+  }
+}
+
+void loop(){
+  while(1){
+
   }
 }

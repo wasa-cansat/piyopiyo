@@ -48,9 +48,9 @@ void getGPSData() {
       Serial.println(String(startTime / 1000) + "秒　　　");
       if(data.latitude != 0.0){
         Serial.print("現在地（");
-        Serial.print(data.latitude, 6);
+        Serial.print(data.latitude, 9);
         Serial.print(",");
-        Serial.print(data.longitude, 6);
+        Serial.print(data.longitude, 9);
         Serial.print(") ");
     
         Serial.print("方位: ");
