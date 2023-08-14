@@ -9,8 +9,6 @@
 #include "HUSKYLENS.h"
 #include <Adafruit_BMP280.h>
 #include <SD.h>
-
-
 #include <Servo.h>
 
 
@@ -28,8 +26,8 @@ bool cam_sw = false;
 //35.704978,139.713760
 //GPS関連
 TinyGPSPlus gps;
-double destLatitude = 35.704978;    // 目的地の緯度
-double destLongitude = 139.713760;  // 目的地の経度
+double destLatitude = 35.707557;    // 目的地の緯度
+double destLongitude = 139.661578;  // 目的地の経度
 
 int RX_PIN = 0;
 int TX_PIN = 1;
@@ -65,10 +63,10 @@ Motor motor;
 
 
 //SD関連
-File myFile;
-void sd_setup();
- const int chipSelect = 10;
-void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle, int motor_status);
+// File myFile;
+// void sd_setup();
+//  const int chipSelect = 10;
+// void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle, int motor_status);
 //
 ////落下検知
 //void sd_write(double height, double accel, double stat){
@@ -181,7 +179,7 @@ void setup(void)
   pinMode(TX_PIN, OUTPUT);
 
   //SD用
-  sd_setup();
+  // sd_setup();
 
   //servo
   myservo.attach(6);
@@ -248,13 +246,13 @@ void loop(void)
 
   
   while(1){
-    sd_previous_time = millis();
-    if(sd_previous_time - sd_time > 2000){
-      motor.freeze(0);
-      Serial.println("sd write");
-      sd_GPSwrite(now_data.latitude, now_data.longitude, now_data.bearing, now_data.distance, cal_x, motor_status);
-      sd_time = millis();
-    }
+    // sd_previous_time = millis();
+    // if(sd_previous_time - sd_time > 2000){
+    //   motor.freeze(0);
+    //   Serial.println("sd write");
+    //   sd_GPSwrite(now_data.latitude, now_data.longitude, now_data.bearing, now_data.distance, cal_x, motor_status);
+    //   sd_time = millis();
+    // }
 
     
     if (huskylens.request()) {
@@ -293,37 +291,33 @@ void loop(void)
     
     if(previous_time -time > 100){
       Serial.println(now_data.bearing);
+      sensors_event_t orientationData, magnetometerData;
 
-
-
-
-    sensors_event_t orientationData, magnetometerData;
-
-    bno.getEvent(&orientationData);
-    bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
-  
-    double x = orientationData.orientation.x;
-    double y = orientationData.orientation.y;
-    double z = orientationData.orientation.z;
-    double mag_x = magnetometerData.magnetic.x;
-    double mag_y = magnetometerData.magnetic.y;
-    double mag_z = magnetometerData.magnetic.z;
-    if(abs(mag_y + 0.06) < 0.0001 || abs(mag_y + 8.06) < 0.0001 || (mag_x + mag_y + mag_z) > 2000){
-        // Serial.println("not valid");
-    }
-    else{
-          error = atan2(mag_y, mag_x)*180/PI + 180 - x;
-//        Serial.print("mag_x = ");
-//        Serial.println(atan2(mag_y, mag_x)*180/PI + 180);
-//        Serial.print("error: ");
-//        Serial.println(error);
-    } 
-    cal_x = (x + error)<360 ? x + error: x + error - 360.0;
-    cal_x = (cal_x + 180) < 360? cal_x + 180: cal_x - 180; //I2cテスト用にコメントアウト
-   cal_x = 360 - cal_x;
-    Serial.print("x = ");
-    Serial.println(cal_x); 
-    time = millis();     
+      bno.getEvent(&orientationData);
+      bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
+    
+      double x = orientationData.orientation.x;
+      double y = orientationData.orientation.y;
+      double z = orientationData.orientation.z;
+      double mag_x = magnetometerData.magnetic.x;
+      double mag_y = magnetometerData.magnetic.y;
+      double mag_z = magnetometerData.magnetic.z;
+      if(abs(mag_y + 0.06) < 0.0001 || abs(mag_y + 8.06) < 0.0001 || (mag_x + mag_y + mag_z) > 2000){
+          // Serial.println("not valid");
+      }
+      else{
+            error = atan2(mag_y, mag_x)*180/PI + 180 - x;
+  //        Serial.print("mag_x = ");
+  //        Serial.println(atan2(mag_y, mag_x)*180/PI + 180);
+  //        Serial.print("error: ");
+  //        Serial.println(error);
+      } 
+      cal_x = (x + error)<360 ? x + error: x + error - 360.0;
+      cal_x = (cal_x + 180) < 360? cal_x + 180: cal_x - 180; //I2cテスト用にコメントアウト
+      cal_x = 360 - cal_x;
+      Serial.print("x = ");
+      Serial.println(cal_x); 
+      time = millis();     
     }
 
 
@@ -399,58 +393,58 @@ LocationData getGPSData(double angle) {
 
 ////SD用
 
-void sd_setup(){
-  pinMode(10, OUTPUT);
-  while(!SD.begin(10)){
-    delay(1000);
-    Serial.println("sd setup failed");
-  }
-  myFile = SD.open("LOG.txt", FILE_WRITE);
-  myFile.println("start log");
-  myFile.close();
-}
+// void sd_setup(){
+//   pinMode(10, OUTPUT);
+//   while(!SD.begin(10)){
+//     delay(1000);
+//     Serial.println("sd setup failed");
+//   }
+//   myFile = SD.open("LOG.txt", FILE_WRITE);
+//   myFile.println("start log");
+//   myFile.close();
+// }
 
-void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle, int motor_status){
-  myFile = SD.open("LOG.txt", FILE_WRITE);
-  if (myFile){
-    myFile.print("time: ");
-    unsigned long gps_time = millis();
-    myFile.println(String(gps_time/1000));
-      myFile.print(" Latitude: ");
-      myFile.print(String(latitude,9));
-      Serial.println(latitude, 9);
-      myFile.print(" longitude: ");
-      myFile.print(String(longitude,9));
-      Serial.println(longitude, 9);
-      myFile.print(" bearing: ");
-      myFile.print(String(bearing,9));
-      Serial.println(bearing, 9);
-      myFile.print(" distance: ");
-      myFile.println(String(distance,9));
-      Serial.println(distance, 9);
-      myFile.print(" angle: ");
-      myFile.println(String(angle,9));
-      Serial.println(angle, 9);
-      myFile.print(" motor_status: ");
-      myFile.println(String(motor_status,9));
-      Serial.println(motor_status, 9);
+// void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle, int motor_status){
+//   myFile = SD.open("LOG.txt", FILE_WRITE);
+//   if (myFile){
+//     myFile.print("time: ");
+//     unsigned long gps_time = millis();
+//     myFile.println(String(gps_time/1000));
+//       myFile.print(" Latitude: ");
+//       myFile.print(String(latitude,9));
+//       Serial.println(latitude, 9);
+//       myFile.print(" longitude: ");
+//       myFile.print(String(longitude,9));
+//       Serial.println(longitude, 9);
+//       myFile.print(" bearing: ");
+//       myFile.print(String(bearing,9));
+//       Serial.println(bearing, 9);
+//       myFile.print(" distance: ");
+//       myFile.println(String(distance,9));
+//       Serial.println(distance, 9);
+//       myFile.print(" angle: ");
+//       myFile.println(String(angle,9));
+//       Serial.println(angle, 9);
+//       myFile.print(" motor_status: ");
+//       myFile.println(String(motor_status,9));
+//       Serial.println(motor_status, 9);
     
-  }
-  else{
-    myFile.close();
-    motor.freeze(0);
-    Serial.println("cannot open file");
-    pinMode(10, OUTPUT);
-    for(int i = 0; i < 3; i++){
-      if(SD.begin(10)){
+//   }
+//   else{
+//     myFile.close();
+//     motor.freeze(0);
+//     Serial.println("cannot open file");
+//     pinMode(10, OUTPUT);
+//     for(int i = 0; i < 3; i++){
+//       if(SD.begin(10)){
         
-      }
-      Serial.println("sd setup failed");
-      delay(1000);
-    }
-  }
-  myFile.close();
-}
+//       }
+//       Serial.println("sd setup failed");
+//       delay(1000);
+//     }
+//   }
+//   myFile.close();
+// }
 
 
 //huskylens

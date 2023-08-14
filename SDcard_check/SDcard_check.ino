@@ -1,4 +1,5 @@
 #include <SD.h>
+#include <SPI.h>
 
 File myFile;
 
@@ -17,9 +18,12 @@ void sd_write(){
   myFile = SD.open("test.txt", FILE_WRITE);
   if (myFile){
     myFile.print("time: ");
+    Serial.print("time: ");
     time = millis();
     myFile.print(String(time/1000)+" ");
+    Serial.print(String(time/1000)+" ");
     myFile.println("問題なし");
+    Serial.println("問題なし");
   }
   else{
     Serial.println("cannot write to file");
@@ -28,8 +32,8 @@ void sd_write(){
 }
 
 void setup() {
-  Serial.begin(115200);
-  Serail.println("start")
+  Serial.begin(9600);
+  Serial.println("start");
   sd_setup();
   Serial.println("done");
 }
