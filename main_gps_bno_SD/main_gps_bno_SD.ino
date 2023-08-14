@@ -68,7 +68,6 @@ void setup(void)
 {
 
   //SD用
-  sd_setup();
 
 
   //モーター用
@@ -218,7 +217,6 @@ LocationData getGPSData(double angle) {
         Serial.print("距離: ");
         Serial.print(data.distance, 6);
         Serial.println("m");
-        sd_GPSwrite(data.latitude, data.longitude, data.bearing, data.distance, angle);
         return data;
       }
     }
