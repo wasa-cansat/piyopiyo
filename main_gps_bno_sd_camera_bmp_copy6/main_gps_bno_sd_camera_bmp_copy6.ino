@@ -90,7 +90,7 @@ void fall_detect();
 // 落下距離(m)の閾値[30.0 ±0.6]
 const float fallDistance = 1.0;
 // 自由落下時の加速度(m/s2)の閾値[0.5]
-const float fallAccelThreshold = 0.0;
+const float fallAccelThreshold = 9.68;
 // 着地後静止時の加速度変化(m/s2)の誤差範囲(理論値は0)[0.1]
 const float landedAccelThreshold = 0.1;
 // 着地後静止時の気圧変化(Pa)の誤差範囲(理論値は0）[30]
@@ -573,7 +573,7 @@ void fall_detect(){
 
 //      digitalWrite(LEDB, LOW);
       // 現在高度が最高地点からfallDiatance以上落下したとき、かつ加速度がfallAccelThreshold以下になったときに，落下を検出
-      if (abs(accel - fallAccelThreshold) > 2.0) {
+      if (abs(accel - fallAccelThreshold) > 0.5 && highestAlltitude - altitude > 10) {
         fallStartTime = millis();
         state = CHECK_LANDED;
         lastPressure = basePressure;

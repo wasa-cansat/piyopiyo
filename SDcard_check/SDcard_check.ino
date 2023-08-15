@@ -26,7 +26,9 @@ void sd_write(){
     Serial.println("問題なし");
   }
   else{
+    myFile.close();
     Serial.println("cannot write to file");
+    sd_setup();
   }
   myFile.close();
 }
