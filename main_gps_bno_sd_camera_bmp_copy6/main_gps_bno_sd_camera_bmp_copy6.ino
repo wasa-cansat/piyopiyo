@@ -26,8 +26,8 @@ bool cam_sw = false;
 //35.704978,139.713760
 //GPS関連
 TinyGPSPlus gps;
-double destLatitude = 35.707557;    // 目的地の緯度
-double destLongitude = 139.661578;  // 目的地の経度
+double destLatitude = 40.142656476;    // 目的地の緯度
+double destLongitude = 139.98763262;  // 目的地の経度
 
 int RX_PIN = 0;
 int TX_PIN = 1;
@@ -184,9 +184,9 @@ void setup(void)
   //servo
   myservo.attach(6);
   myservo.write(180);
-  delay(10000);
-  myservo.write(90);
-  delay(10000);
+  delay(5000);
+  myservo.write(140);
+  delay(5000);
   myservo.write(160);
 
   
@@ -573,7 +573,7 @@ void fall_detect(){
 
 //      digitalWrite(LEDB, LOW);
       // 現在高度が最高地点からfallDiatance以上落下したとき、かつ加速度がfallAccelThreshold以下になったときに，落下を検出
-      if (abs(accel - fallAccelThreshold) < 0.5 && highestAltitude - altitude > 1.0) {
+      if (abs(accel - fallAccelThreshold) < 0.5 && highestAltitude - altitude > 15.0) {
         fallStartTime = millis();
         state = CHECK_LANDED;
         lastPressure = basePressure;
