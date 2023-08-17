@@ -706,14 +706,23 @@ void fall_detect(){
 
   // 前回の加速度を更新
   lastAccel = accel;
+  
   if(count%4 == 0){
-    myFile.print("time: ");
-    myFile.println(String(millis()/1000));
-    myFile.print("accel: ");
-    myFile.println(String(accel));
-    myFile.print("altitude: ");
-    myFile.println(String(altitude));
-    Serial.println("pressure written to sd");
+    myFile = SD.open("LOG.txt", FILE_WRITE);
+    if (myFile){
+      myFile.print("time: ");
+      myFile.println(String(millis()/1000));
+      myFile.print("accel: ");
+      myFile.println(String(accel));
+      myFile.print("altitude: ");
+      myFile.println(String(altitude));
+      Serial.println("pressure written to sd");
+    }
+    else{
+      Serial.println("cannot write to sd");
+    }
+    myFile.close();
+
   }
 
   delay(1000);
