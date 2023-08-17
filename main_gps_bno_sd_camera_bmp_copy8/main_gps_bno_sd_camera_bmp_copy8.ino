@@ -582,6 +582,7 @@ void fall_detect(){
   while(1){
     Serial.println(count);
     count++;
+    
   
   // if(count >= 10){
   //   Serial.println("wrote in SD");
@@ -705,6 +706,15 @@ void fall_detect(){
 
   // 前回の加速度を更新
   lastAccel = accel;
+  if(count%4 == 0){
+    myFile.print("time: ");
+    myFile.println(String(millis()/1000));
+    myFile.print("accel: ");
+    myFile.println(String(accel));
+    myFile.print("altitude: ");
+    myFile.println(String(altitude));
+    Serial.println("pressure written to sd");
+  }
 
   delay(1000);
   }
