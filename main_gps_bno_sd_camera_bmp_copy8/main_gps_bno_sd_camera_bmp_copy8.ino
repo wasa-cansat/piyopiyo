@@ -234,11 +234,39 @@ void loop(void)
 
 
   fall_detect();
-  
+  //サーボを動かすとともにsdカードに時間と角度を保存
   myservo.write(40);
+  myFile = SD.open("SERVO.txt", FILE_WRITE);
+  if(myFile){
+    myFile.print(String(millis()/1000));
+    myFile.print(",");
+    myFile.println("40");
+  }
+  myFile.close();
   delay(2000);
+  
   myservo.write(180);
+  myFile = SD.open("SERVO.txt", FILE_WRITE);
+  if(myFile){
+    myFile.print(String(millis()/1000));
+    myFile.print(",");
+    myFile.println("40");
+  }
+  myFile.close();
   delay(1000);
+
+
+  //新たにファイルgps.txtを作成し、そこにgps、9軸、モーターなどの情報を保存　モーターが0のとき停止、1のとき直進、3のとき右折、4のとき左折
+  myFile = SD.open("GPS.txt", FILE_WRITE);
+  if(myFile){
+    myFile.println("time,latitude,longitude,bearing,distance,angle,motor_status");
+  }
+  else{
+    Serial.println("cannot write to sd");
+  }
+  myFile.close();
+
+  
 
 
 
@@ -436,32 +464,37 @@ void sd_setup(){
   myFile = SD.open("LOG.txt", FILE_WRITE);
   myFile.println("start log");
   myFile.close();
+  myFile = SD.open("GPS.txt", FILE_WRITE);
+  myFile.println("start log");
+  myFile.close();
+  myFile = SD.open("SERVO.txt", FILE_WRITE);
+  myFile.println("start log");
+  myFile.close();
 }
 
 void sd_GPSwrite(double latitude, double longitude, double bearing, double distance, double angle, int motor_status){
-  myFile = SD.open("LOG.txt", FILE_WRITE);
+  myFile = SD.open("GPS.txt", FILE_WRITE);
   if (myFile){
-    myFile.print("time: ");
     unsigned long gps_time = millis();
-    myFile.println(String(gps_time/1000));
-      myFile.print(" Latitude: ");
-      myFile.print(String(latitude,9));
-      Serial.println(latitude, 9);
-      myFile.print(" longitude: ");
-      myFile.print(String(longitude,9));
-      Serial.println(longitude, 9);
-      myFile.print(" bearing: ");
-      myFile.print(String(bearing,9));
-      Serial.println(bearing, 9);
-      myFile.print(" distance: ");
-      myFile.println(String(distance,9));
-      Serial.println(distance, 9);
-      myFile.print(" angle: ");
-      myFile.println(String(angle,9));
-      Serial.println(angle, 9);
-      myFile.print(" motor_status: ");
-      myFile.println(String(motor_status,9));
-      Serial.println(motor_status, 9);
+    myFile.print(String(gps_time/1000));
+    myFile.print(",");
+    myFile.print(String(latitude,9));
+    myFile.print(",");
+    Serial.println(latitude, 9);
+    myFile.print(String(longitude,9));
+    myFile.print(",");
+    Serial.println(longitude, 9);
+    myFile.print(String(bearing,9));
+    myFile.print(",");
+    Serial.println(bearing, 9);
+    myFile.println(String(distance,9));
+    myFile.print(",");
+    Serial.println(distance, 9);
+    myFile.println(String(angle,9));
+    myFile.print(",");
+    Serial.println(angle, 9);
+    myFile.println(String(motor_status,9));
+    Serial.println(motor_status, 9);
     
   }
   else{
@@ -579,6 +612,17 @@ void findObjectSetup(){
 void fall_detect(){
   int count = -1;
   double data[200][3];
+  bool landed = false;
+  //表の項目をsdカードに書き込み
+  myFile = SD.open("LOG.txt", FILE_WRITE);
+  if (myFile){
+    myFile.println("time,accel,altitude,status");
+  }
+  else{
+    Serial.println("cannot write to sd");
+  }
+  myFile.close();
+  
   while(1){
     Serial.println(count);
     count++;
@@ -668,7 +712,7 @@ void fall_detect(){
       delay(100);
       if (i <= 1) lastPressure = pressure; // 初回時の気圧を記憶
       if (i >= landedIdleDuration*10) state = EXIT;
-      Serial.println("landed");
+      landed = true;
       break;
 
     case EXIT:
@@ -707,24 +751,30 @@ void fall_detect(){
   // 前回の加速度を更新
   lastAccel = accel;
   
-  if(count%4 == 0){
-    myFile = SD.open("LOG.txt", FILE_WRITE);
-    if (myFile){
-      myFile.print("time: ");
-      myFile.println(String(millis()/1000));
-      myFile.print("accel: ");
-      myFile.println(String(accel));
-      myFile.print("altitude: ");
-      myFile.println(String(altitude));
-      Serial.println("pressure written to sd");
+  myFile = SD.open("LOG.txt", FILE_WRITE);
+  if (myFile){
+    myFile.print(String(millis()/1000));
+    myFile.print(",");
+    myFile.print(String(accel));
+    myFile.print(",");
+    myFile.print(String(altitude));
+    myFile.print(",");
+    if(landed){
+      myFile.println("landed");
     }
     else{
-      Serial.println("cannot write to sd");
+      myFile.println("not landed");
     }
-    myFile.close();
-
+    Serial.println("pressure written to sd");
   }
+  else{
+    Serial.println("cannot write to sd");
+  }
+  myFile.close();
 
-  delay(1000);
+  
+  
+
+  delay(250);
   }
 }
