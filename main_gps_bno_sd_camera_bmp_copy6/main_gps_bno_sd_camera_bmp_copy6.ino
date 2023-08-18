@@ -573,7 +573,7 @@ void fall_detect(){
 
 //      digitalWrite(LEDB, LOW);
       // 現在高度が最高地点からfallDiatance以上落下したとき、かつ加速度がfallAccelThreshold以下になったときに，落下を検出
-      if (abs(accel - fallAccelThreshold) < 0.5 && highestAltitude - altitude > 15.0) {
+      if (abs(accel - fallAccelThreshold) < 0.5 && highestAltitude - altitude > 1.0) {
         fallStartTime = millis();
         state = CHECK_LANDED;
         lastPressure = basePressure;
